@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PriceCompare | Сравнение цен</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-theme="light">
+
+<header class="header">
+
+    <div class="logo">
+        <i class="fa-solid fa-tags"></i>
+        <h1>PriceCompare</h1>
+    </div>
+
+    <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+
+        <input
+            type="text"
+            id="search"
+            placeholder="Поиск товара..."
+        >
+    </div>
+
+    <div class="header-buttons">
+
+        <select id="languageSelect" class="header-select">
+            <option value="ru">RU</option>
+            <option value="uz">UZ</option>
+            <option value="en">EN</option>
+        </select>
+
+        <select id="currencySelect" class="header-select">
+            <option value="USD">USD $</option>
+            <option value="UZS">UZS so'm</option>
+            <option value="EUR">EUR €</option>
+            <option value="JPY">JPY ¥</option>
+        </select>
+
+        <button id="themeBtn" class="icon-btn" title="Темы">
+            <i class="fa-solid fa-palette"></i>
+        </button>
+
+        <button class="icon-btn favorites-btn" title="Избранное">
+            <i class="fa-solid fa-heart"></i>
+            <span class="badge" id="favCount">0</span>
+        </button>
+
+    </div>
+
+</header>
+
+
+<!-- THEMES -->
+
+<div id="themePanel" class="theme-panel">
+
+    <h3>🎨 Themes</h3>
+
+    <button class="theme-option" data-theme="light">☀️ Light</button>
+    <button class="theme-option" data-theme="dark">🌙 Dark</button>
+    <button class="theme-option" data-theme="blue">🔵 Blue Neon</button>
+    <button class="theme-option" data-theme="purple">🟣 Purple Neon</button>
+    <button class="theme-option" data-theme="cyber">🤖 Cyber City</button>
+    <button class="theme-option" data-theme="aurora">🌌 Aurora</button>
+    <button class="theme-option" data-theme="galaxy">🚀 Galaxy</button>
+    <button class="theme-option" data-theme="matrix">💚 Matrix</button>
+    <button class="theme-option" data-theme="black">⚫ Pure Black</button>
+    <button class="theme-option" data-theme="white">⚪ Pure White</button>
+
+</div>
+
+
+<!-- HERO -->
+
+<section class="hero">
+
+    <h2 data-i18n="heroTitle">
+        Сравнивайте цены за несколько секунд
+    </h2>
+
+    <p data-i18n="heroText">
+        Найдите самое выгодное предложение среди популярных товаров
+    </p>
+
+</section>
+
+
+<!-- FILTERS -->
+
+<section class="filters-section">
+
+    <div class="filters-container">
+
+        <select id="storeFilter" class="filter-select">
+            <option value="all" data-i18n="allStores">Все магазины</option>
+            <option value="Amazon">Amazon</option>
+            <option value="DNS">DNS</option>
+            <option value="Ozon">Ozon</option>
+        </select>
+
+        <select id="sort" class="filter-select">
+            <option value="cheap" data-i18n="cheap">Сначала дешёвые</option>
+            <option value="expensive" data-i18n="expensive">Сначала дорогие</option>
+            <option value="rating" data-i18n="ratingSort">По рейтингу</option>
+            <option value="newest" data-i18n="newest">Новые</option>
+        </select>
+
+        <div class="price-filter">
+            <input
+                type="range"
+                id="priceRange"
+                min="0"
+                max="2000"
+                value="2000"
+            >
+
+            <span id="priceDisplay">до $2000</span>
+        </div>
+
+        <button id="clearFilters" class="clear-btn">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span data-i18n="clear">Очистить</span>
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- STATS -->
+
+<section class="info">
+
+    <div class="stat-card">
+        <i class="fa-solid fa-box"></i>
+
+        <div>
+            <h3 id="count">0</h3>
+            <p data-i18n="productsFound">Товаров найдено</p>
+        </div>
+    </div>
+
+
+    <div class="stat-card">
+        <i class="fa-solid fa-store"></i>
+
+        <div>
+            <h3>3</h3>
+            <p data-i18n="stores">Магазина</p>
+        </div>
+    </div>
+
+
+    <div class="stat-card">
+        <i class="fa-solid fa-dollar-sign"></i>
+
+        <div>
+            <h3 id="avgPrice">$0</h3>
+            <p data-i18n="averagePrice">Средняя цена</p>
+        </div>
+    </div>
+
+
+    <div class="stat-card">
+        <i class="fa-solid fa-heart"></i>
+
+        <div>
+            <h3 id="favTotal">0</h3>
+            <p data-i18n="favorites">В избранном</p>
+        </div>
+    </div>
+
+</section>
+
+
+<!-- PRODUCTS -->
+
+<main>
+
+    <div id="products" class="products-grid"></div>
+
+    <div id="noResults" class="no-results">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <h3 data-i18n="notFound">Товары не найдены</h3>
+        <p data-i18n="tryAgain">Попробуйте изменить параметры поиска</p>
+    </div>
+
+</main>
+
+
+<!-- FOOTER -->
+
+<footer>
+
+    <div class="footer-content">
+
+        <div>
+            <h3>PriceCompare</h3>
+
+            <p data-i18n="footerText">
+                Сервис поиска и сравнения товаров.
+            </p>
+        </div>
+
+        <div>
+            <h4 data-i18n="stores">Магазины</h4>
+
+            <ul>
+                <li>Amazon</li>
+                <li>DNS</li>
+                <li>Ozon</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="copyright">
+        © 2026 PriceCompare
+    </div>
+
+</footer>
+
+
+<!-- FAVORITES MODAL -->
+
+<div id="favoritesModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 data-i18n="favoritesTitle">
+                Избранные товары
+            </h2>
+
+            <button id="closeModal" class="close-btn">
+                &times;
+            </button>
+
+        </div>
+
+        <div id="favoritesList"></div>
+
+    </div>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
