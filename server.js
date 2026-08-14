@@ -1,28 +1,29 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// public papkasidagi HTML, CSS va JS fayllarni ochish
-app.use(express.static("public"));
+// public papkasini ulash
+app.use(express.static(path.join(__dirname, "public")));
 
+// ================================
+// BOSH SAHIFA
+// ================================
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-// ==========================================
+// ================================
 // QIDIRUV API
-// Masalan: /api/search?q=iphone
-// ==========================================
-
+// ================================
 app.get("/api/search", async (req, res) => {
-
     const query = req.query.q;
 
-    // Qidiruv bo'sh bo'lsa
     if (!query || query.trim() === "") {
         return res.status(400).json({
             success: false,
@@ -31,8 +32,6 @@ app.get("/api/search", async (req, res) => {
     }
 
     try {
-
-        // Hozircha test uchun mahsulot API
         const response = await fetch(
             `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`
         );
@@ -43,10 +42,8 @@ app.get("/api/search", async (req, res) => {
 
         const data = await response.json();
 
-        // Demo do'konlar
         const stores = ["Amazon", "DNS", "Ozon"];
 
-        // Mahsulotlarni bir xil formatga o'tkazamiz
         const products = data.products.map((product, index) => ({
             id: product.id,
             name: product.title,
@@ -60,32 +57,29 @@ app.get("/api/search", async (req, res) => {
 
         res.json({
             success: true,
-            query: query,
+            query,
             count: products.length,
-            products: products
+            products
         });
 
     } catch (error) {
-
         console.error("Search error:", error.message);
 
         res.status(500).json({
             success: false,
             message: "Mahsulotlarni yuklashda xatolik yuz berdi"
         });
-
     }
-
 });
 
+// Vercel uchun export
+module.exports = app;
 
-// ==========================================
-// SERVERNI ISHGA TUSHIRISH
-// ==========================================
+// Lokal kompyuterda ishlashi uchun
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log("=================================");
-    console.log("PriceCompare server ishladi!");
-    console.log(`http://localhost:${PORT}`);
-    console.log("=================================");
-});
+    app.listen(PORT, () => {
+        console.log(`PriceCompare: http://localhost:${PORT}`);
+    });
+}
