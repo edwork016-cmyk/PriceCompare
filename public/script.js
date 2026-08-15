@@ -1,1223 +1,730 @@
-// ==========================================
-// PRICECOMPARE - FRONTEND SCRIPT
-// Node.js + Express Backend bilan ishlaydi
-// ==========================================
-
-
-// ==========================================
-// HTML ELEMENTLARI
-// ==========================================
+const API_URL = "/api/search";
 
 const searchInput = document.getElementById("search");
+const productsContainer = document.getElementById("products");
+
 const storeFilter = document.getElementById("storeFilter");
 const sortSelect = document.getElementById("sort");
 const priceRange = document.getElementById("priceRange");
 const priceDisplay = document.getElementById("priceDisplay");
-const clearFiltersBtn = document.getElementById("clearFilters");
+const clearFilters = document.getElementById("clearFilters");
 
-const productsContainer = document.getElementById("products");
-const noResults = document.getElementById("noResults");
-
-const count = document.getElementById("count");
-const avgPrice = document.getElementById("avgPrice");
-
-const themeBtn = document.getElementById("themeBtn");
-const themePanel = document.getElementById("themePanel");
-const themeOptions = document.querySelectorAll(".theme-option");
+const countElement = document.getElementById("count");
+const avgPriceElement = document.getElementById("avgPrice");
+const favCountElement = document.getElementById("favCount");
+const favTotalElement = document.getElementById("favTotal");
 
 const languageSelect = document.getElementById("languageSelect");
 const currencySelect = document.getElementById("currencySelect");
 
-const favoritesBtn = document.querySelector(".favorites-btn");
-const favCount = document.getElementById("favCount");
-const favTotal = document.getElementById("favTotal");
+const themeBtn = document.getElementById("themeBtn");
+const themePanel = document.getElementById("themePanel");
 
+const favoritesBtn = document.getElementById("favoritesBtn");
 const favoritesModal = document.getElementById("favoritesModal");
-const closeModal = document.getElementById("closeModal");
 const favoritesList = document.getElementById("favoritesList");
-
-
-// ==========================================
-// MA'LUMOTLAR
-// ==========================================
+const closeModal = document.getElementById("closeModal");
 
 let products = [];
 
-let favorites =
-    JSON.parse(localStorage.getItem("priceCompareFavorites")) || [];
+let favorites = JSON.parse(
+    localStorage.getItem("pricecompareFavorites")
+) || [];
 
 let currentLanguage =
-    localStorage.getItem("priceCompareLanguage") || "ru";
+    localStorage.getItem("pricecompareLanguage") || "ru";
 
 let currentCurrency =
-    localStorage.getItem("priceCompareCurrency") || "USD";
+    localStorage.getItem("pricecompareCurrency") || "USD";
 
 let currentTheme =
-    localStorage.getItem("priceCompareTheme") || "light";
+    localStorage.getItem("pricecompareTheme") || "light";
 
-
-// ==========================================
-// VALYUTA KURSLARI
-// Hozircha demo kurslar
-// ==========================================
-
-const exchangeRates = {
-    USD: 1,
-    UZS: 12600,
-    EUR: 0.92,
-    JPY: 150
-};
-
-
-// ==========================================
-// TILLAR
-// ==========================================
 
 const translations = {
-
     ru: {
+        search: "Поиск товара...",
         heroTitle: "Сравнивайте цены за несколько секунд",
         heroText: "Найдите самое выгодное предложение среди популярных товаров",
-        allStores: "Все магазины",
+        allSources: "Все источники",
         cheap: "Сначала дешёвые",
         expensive: "Сначала дорогие",
-        ratingSort: "По рейтингу",
-        newest: "Новые",
+        rating: "По рейтингу",
         clear: "Очистить",
-        productsFound: "Товаров найдено",
-        stores: "Магазина",
-        averagePrice: "Средняя цена",
+        products: "Товаров найдено",
+        sources: "Источников",
+        average: "Средняя цена",
         favorites: "В избранном",
+        view: "Посмотреть товар",
+        favoriteTitle: "Избранное",
+        empty: "Введите название товара для поиска 🔎",
+        loading: "Товары загружаются...",
         notFound: "Товары не найдены",
-        tryAgain: "Попробуйте изменить параметры поиска",
-        footerText: "Сервис поиска и сравнения товаров.",
-        favoritesTitle: "Избранные товары",
-        searchPlaceholder: "Поиск товара...",
-        viewProduct: "Посмотреть товар",
-        remove: "Удалить",
-        emptyFavorites: "Избранное пусто",
-        searching: "Поиск товаров...",
-        searchError: "Не удалось загрузить товары",
-        enterSearch: "Введите название товара"
+        footer: "Сервис поиска и сравнения товаров."
     },
 
     uz: {
+        search: "Mahsulot qidirish...",
         heroTitle: "Narxlarni bir necha soniyada solishtiring",
-        heroText: "Ommabop mahsulotlar orasidan eng yaxshi taklifni toping",
-        allStores: "Barcha do'konlar",
+        heroText: "Mashhur mahsulotlar orasidan eng yaxshi taklifni toping",
+        allSources: "Barcha manbalar",
         cheap: "Avval arzonlari",
         expensive: "Avval qimmatlari",
-        ratingSort: "Reyting bo'yicha",
-        newest: "Yangilari",
+        rating: "Reyting bo'yicha",
         clear: "Tozalash",
-        productsFound: "Mahsulot topildi",
-        stores: "Do'kon",
-        averagePrice: "O'rtacha narx",
+        products: "Mahsulot topildi",
+        sources: "Manbalar",
+        average: "O'rtacha narx",
         favorites: "Sevimlilarda",
-        notFound: "Mahsulot topilmadi",
-        tryAgain: "Qidiruv parametrlarini o'zgartirib ko'ring",
-        footerText: "Mahsulotlarni qidirish va solishtirish xizmati.",
-        favoritesTitle: "Sevimli mahsulotlar",
-        searchPlaceholder: "Mahsulot qidirish...",
-        viewProduct: "Mahsulotni ko'rish",
-        remove: "O'chirish",
-        emptyFavorites: "Sevimlilar bo'sh",
-        searching: "Mahsulotlar qidirilmoqda...",
-        searchError: "Mahsulotlarni yuklab bo'lmadi",
-        enterSearch: "Mahsulot nomini kiriting"
+        view: "Mahsulotni ko'rish",
+        favoriteTitle: "Sevimlilar",
+        empty: "Qidirish uchun mahsulot nomini yozing 🔎",
+        loading: "Mahsulotlar yuklanmoqda...",
+        notFound: "Mahsulotlar topilmadi",
+        footer: "Mahsulotlarni qidirish va solishtirish xizmati."
     },
 
     en: {
-        heroTitle: "Compare prices in seconds",
+        search: "Search for a product...",
+        heroTitle: "Compare prices in just a few seconds",
         heroText: "Find the best offer among popular products",
-        allStores: "All stores",
+        allSources: "All sources",
         cheap: "Cheapest first",
-        expensive: "Most expensive",
-        ratingSort: "By rating",
-        newest: "Newest",
+        expensive: "Most expensive first",
+        rating: "By rating",
         clear: "Clear",
-        productsFound: "Products found",
-        stores: "Stores",
-        averagePrice: "Average price",
-        favorites: "Favorites",
-        notFound: "Products not found",
-        tryAgain: "Try changing your search settings",
-        footerText: "Product search and comparison service.",
-        favoritesTitle: "Favorite products",
-        searchPlaceholder: "Search product...",
-        viewProduct: "View product",
-        remove: "Remove",
-        emptyFavorites: "Favorites are empty",
-        searching: "Searching products...",
-        searchError: "Could not load products",
-        enterSearch: "Enter a product name"
+        products: "Products found",
+        sources: "Sources",
+        average: "Average price",
+        favorites: "In favorites",
+        view: "View product",
+        favoriteTitle: "Favorites",
+        empty: "Enter a product name to search 🔎",
+        loading: "Loading products...",
+        notFound: "No products found",
+        footer: "Product search and comparison service."
     }
-
 };
 
 
-// ==========================================
-// NARXNI FORMATLASH
-// ==========================================
+const rates = {
+    USD: 1,
+    UZS: 12500,
+    EUR: 0.92,
+    JPY: 150,
+    RUB: 100
+};
 
-function formatPrice(price) {
 
-    const convertedPrice =
-        Number(price) * exchangeRates[currentCurrency];
-
-    return new Intl.NumberFormat(
-        currentLanguage === "uz"
-            ? "uz-UZ"
-            : currentLanguage === "ru"
-            ? "ru-RU"
-            : "en-US",
-        {
-            style: "currency",
-            currency: currentCurrency,
-
-            maximumFractionDigits:
-                currentCurrency === "UZS" ||
-                currentCurrency === "JPY"
-                    ? 0
-                    : 2
-        }
-    ).format(convertedPrice);
-
+function t(key) {
+    return translations[currentLanguage][key] || key;
 }
 
 
-// ==========================================
-// BACKEND ORQALI QIDIRISH
-// GET /api/search?q=iphone
-// ==========================================
-
-async function searchProducts(query) {
-
-    if (!query || !query.trim()) {
-
-        alert(
-            translations[currentLanguage].enterSearch
-        );
-
-        return;
-    }
-
-
-    productsContainer.innerHTML = `
-        <div style="
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 60px 20px;
-        ">
-            <i
-                class="fa-solid fa-spinner fa-spin"
-                style="
-                    font-size: 40px;
-                    color: var(--primary);
-                "
-            ></i>
-
-            <p style="
-                margin-top: 20px;
-                font-size: 17px;
-            ">
-                ${translations[currentLanguage].searching}
-            </p>
-        </div>
-    `;
-
-    noResults.style.display = "none";
-
-
-    try {
-
-        const response = await fetch(
-            `/api/search?q=${encodeURIComponent(query.trim())}`
-        );
-
-
-        const data = await response.json();
-
-
-        if (!response.ok || !data.success) {
-
-            throw new Error(
-                data.message || "Search error"
-            );
-
-        }
-
-
-        products = data.products || [];
-
-
-        renderProducts();
-
-
-    } catch (error) {
-
-        console.error(
-            "Search error:",
-            error
-        );
-
-        products = [];
-
-        count.textContent = "0";
-
-        avgPrice.textContent =
-            formatPrice(0);
-
-        productsContainer.innerHTML = `
-            <div style="
-                grid-column: 1 / -1;
-                text-align: center;
-                padding: 60px 20px;
-            ">
-                <i
-                    class="fa-solid fa-triangle-exclamation"
-                    style="
-                        font-size: 45px;
-                        color: #ef4444;
-                    "
-                ></i>
-
-                <h2 style="margin-top: 20px">
-                    ${translations[currentLanguage].searchError}
-                </h2>
-
-                <p style="margin-top: 10px">
-                    ${error.message}
-                </p>
-            </div>
-        `;
-
-    }
-
-}
-
-
-// ==========================================
-// MAHSULOTLARNI KO'RSATISH
-// ==========================================
-
-function renderProducts() {
-
-    let list = [...products];
-
-    const searchText =
-        searchInput.value
-            .trim()
-            .toLowerCase();
-
-    const maxPrice =
-        Number(priceRange.value);
-
-
-    // ======================================
-    // LOKAL QIDIRUV
-    // ======================================
-
-    if (searchText) {
-
-        list = list.filter(product => {
-
-            const name =
-                String(product.name || "")
-                    .toLowerCase();
-
-            const category =
-                String(product.category || "")
-                    .toLowerCase();
-
-            const brand =
-                String(product.brand || "")
-                    .toLowerCase();
-
-            return (
-                name.includes(searchText) ||
-                category.includes(searchText) ||
-                brand.includes(searchText)
-            );
-
-        });
-
-    }
-
-
-    // ======================================
-    // DO'KON FILTRI
-    // ======================================
-
-    if (storeFilter.value !== "all") {
-
-        list = list.filter(product =>
-            product.store === storeFilter.value
-        );
-
-    }
-
-
-    // ======================================
-    // NARX FILTRI
-    // API narxlari USD hisoblanadi
-    // ======================================
-
-    list = list.filter(product =>
-        Number(product.price) <= maxPrice
-    );
-
-
-    // ======================================
-    // SARALASH
-    // ======================================
-
-    switch (sortSelect.value) {
-
-        case "cheap":
-
-            list.sort(
-                (a, b) =>
-                    Number(a.price) -
-                    Number(b.price)
-            );
-
-            break;
-
-
-        case "expensive":
-
-            list.sort(
-                (a, b) =>
-                    Number(b.price) -
-                    Number(a.price)
-            );
-
-            break;
-
-
-        case "rating":
-
-            list.sort(
-                (a, b) =>
-                    Number(b.rating) -
-                    Number(a.rating)
-            );
-
-            break;
-
-
-        case "newest":
-
-            list.sort(
-                (a, b) =>
-                    Number(b.id) -
-                    Number(a.id)
-            );
-
-            break;
-
-    }
-
-
-    // ======================================
-    // STATISTIKA
-    // ======================================
-
-    count.textContent =
-        list.length;
-
-
-    if (list.length > 0) {
-
-        const totalPrice =
-            list.reduce(
-                (sum, product) =>
-                    sum + Number(product.price),
-                0
-            );
-
-        const average =
-            totalPrice / list.length;
-
-        avgPrice.textContent =
-            formatPrice(average);
-
-    } else {
-
-        avgPrice.textContent =
-            formatPrice(0);
-
-    }
-
-
-    // ======================================
-    // NATIJA TOPILMADI
-    // ======================================
-
-    if (list.length === 0) {
-
-        productsContainer.innerHTML = "";
-
-        noResults.style.display =
-            "block";
-
-        return;
-
-    }
-
-
-    noResults.style.display =
-        "none";
-
-
-    // ======================================
-    // PRODUCT CARDS
-    // ======================================
-
-    productsContainer.innerHTML =
-        list.map(product => {
-
-            const isFavorite =
-                favorites.some(
-                    item =>
-                        Number(item.id) ===
-                        Number(product.id)
-                );
-
-
-            return `
-
-                <div class="product">
-
-                    <div class="product-image">
-
-                        <img
-                            src="${product.image}"
-                            alt="${escapeHtml(product.name)}"
-                            loading="lazy"
-                            onerror="this.src='https://placehold.co/400x400?text=No+Image'"
-                        >
-
-
-                        <button
-                            class="favorite-btn ${isFavorite ? "active" : ""}"
-                            onclick="toggleFavorite(${Number(product.id)})"
-                            title="Favorite"
-                        >
-
-                            <i class="
-                                fa-${isFavorite ? "solid" : "regular"}
-                                fa-heart
-                            "></i>
-
-                        </button>
-
-                    </div>
-
-
-                    <div class="product-content">
-
-
-                        <span class="store">
-
-                            <i class="fa-solid fa-store"></i>
-
-                            ${escapeHtml(product.store || "Unknown")}
-
-                        </span>
-
-
-                        <h3>
-                            ${escapeHtml(product.name)}
-                        </h3>
-
-
-                        <p class="category">
-
-                            ${escapeHtml(product.brand || "")}
-                            ${product.brand && product.category ? " • " : ""}
-                            ${escapeHtml(product.category || "")}
-
-                        </p>
-
-
-                        <div class="price">
-
-                            ${formatPrice(product.price)}
-
-                        </div>
-
-
-                        <div class="rating">
-
-                            <i class="fa-solid fa-star"></i>
-
-                            ${Number(product.rating || 0).toFixed(1)}
-
-                        </div>
-
-
-                        <button
-                            class="buy-btn"
-                            onclick="viewProduct(${Number(product.id)})"
-                        >
-
-                            ${translations[currentLanguage].viewProduct}
-
-                        </button>
-
-
-                    </div>
-
-                </div>
-
-            `;
-
-        }).join("");
-
-}
-
-
-// ==========================================
-// HTML XAVFSIZLIGI
-// ==========================================
-
-function escapeHtml(value) {
-
-    return String(value || "")
+function escapeHTML(value) {
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
 }
 
 
-// ==========================================
-// FAVORITE QO'SHISH / OLIB TASHLASH
-// ==========================================
+function formatPrice(usdPrice) {
 
-function toggleFavorite(id) {
+    const value =
+        Number(usdPrice || 0) * rates[currentCurrency];
 
-    const product =
-        products.find(
-            item =>
-                Number(item.id) === Number(id)
-        );
+    if (currentCurrency === "UZS") {
+        return `${Math.round(value).toLocaleString("uz-UZ")} so'm`;
+    }
+
+    if (currentCurrency === "EUR") {
+        return `€${value.toFixed(2)}`;
+    }
+
+    if (currentCurrency === "JPY") {
+        return `¥${Math.round(value).toLocaleString()}`;
+    }
+
+    if (currentCurrency === "RUB") {
+        return `₽${Math.round(value).toLocaleString()}`;
+    }
+
+    return `$${value.toFixed(2)}`;
+}
 
 
-    if (!product) return;
+function updatePriceRangeMax() {
+    // Update slider max based on current currency
+    // We want max $2000 USD equivalent
+    const maxUSD = 2000;
+    const maxInCurrentCurrency = maxUSD * rates[currentCurrency];
+    priceRange.max = Math.round(maxInCurrentCurrency);
+}
 
 
-    const exists =
-        favorites.some(
-            item =>
-                Number(item.id) === Number(id)
-        );
+function getMaxPriceInUSD() {
+    // The slider value is in the current currency, so divide by rate to get USD
+    return Number(priceRange.value) / rates[currentCurrency];
+}
 
 
-    if (exists) {
+function updatePriceDisplay() {
+    // Get the max price in USD first, then format it in current currency
+    const maxPriceUSD = getMaxPriceInUSD();
+    priceDisplay.textContent =
+        `≤ ${formatPrice(maxPriceUSD)}`;
+}
 
-        favorites =
-            favorites.filter(
-                item =>
-                    Number(item.id) !== Number(id)
-            );
 
+function updateLanguage() {
+
+    document.documentElement.lang = currentLanguage;
+
+    searchInput.placeholder = t("search");
+
+    document.getElementById("heroTitle").textContent =
+        t("heroTitle");
+
+    document.getElementById("heroText").textContent =
+        t("heroText");
+
+    storeFilter.options[0].textContent =
+        t("allSources");
+
+    sortSelect.options[0].textContent =
+        t("cheap");
+
+    sortSelect.options[1].textContent =
+        t("expensive");
+
+    sortSelect.options[2].textContent =
+        t("rating");
+
+    document.getElementById("clearText").textContent =
+        t("clear");
+
+    document.getElementById("productsText").textContent =
+        t("products");
+
+    document.getElementById("sourcesText").textContent =
+        t("sources");
+
+    document.getElementById("averageText").textContent =
+        t("average");
+
+    document.getElementById("favoritesText").textContent =
+        t("favorites");
+
+    document.getElementById("favoritesTitle").textContent =
+        t("favoriteTitle");
+
+    document.getElementById("footerText").textContent =
+        t("footer");
+
+    applyFilters();
+}
+
+
+function updateStats(list) {
+
+    countElement.textContent = list.length;
+
+    if (list.length === 0) {
+        avgPriceElement.textContent = formatPrice(0);
     } else {
 
-        favorites.push(product);
+        const total =
+            list.reduce(
+                (sum, product) =>
+                    sum + Number(product.price || 0),
+                0
+            );
 
+        avgPriceElement.textContent =
+            formatPrice(total / list.length);
     }
 
-
-    saveFavorites();
-
-    updateFavorites();
-
-    renderProducts();
-
-
-    if (
-        favoritesModal &&
-        favoritesModal.style.display === "flex"
-    ) {
-
-        renderFavorites();
-
-    }
-
+    favCountElement.textContent = favorites.length;
+    favTotalElement.textContent = favorites.length;
 }
 
-window.toggleFavorite =
-    toggleFavorite;
+
+function showMessage(message) {
+
+    productsContainer.innerHTML = `
+        <div class="empty-message">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <p>${escapeHTML(message)}</p>
+        </div>
+    `;
+}
 
 
-// ==========================================
-// FAVORITELARNI SAQLASH
-// ==========================================
+function showLoading() {
 
-function saveFavorites() {
+    productsContainer.innerHTML = `
+        <div class="loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>${escapeHTML(t("loading"))}</p>
+        </div>
+    `;
+}
+
+
+async function searchProducts() {
+
+    const query = searchInput.value.trim();
+
+    if (!query) {
+        products = [];
+        updateStats([]);
+        showMessage(t("empty"));
+        return;
+    }
+
+    showLoading();
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}?q=${encodeURIComponent(query)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(
+                data.message || "Search error"
+            );
+        }
+
+        products = data.products || [];
+
+        applyFilters();
+
+    } catch (error) {
+
+        console.error(error);
+
+        products = [];
+
+        updateStats([]);
+
+        showMessage("❌ " + error.message);
+    }
+}
+
+
+function applyFilters() {
+
+    let filtered = [...products];
+
+    const maxPrice = getMaxPriceInUSD();
+
+    filtered = filtered.filter(
+        product =>
+            Number(product.price || 0) <= maxPrice
+    );
+
+    if (storeFilter.value !== "all") {
+
+        filtered = filtered.filter(
+            product =>
+                product.store === storeFilter.value
+        );
+    }
+
+    if (sortSelect.value === "cheap") {
+
+        filtered.sort(
+            (a, b) =>
+                Number(a.price) - Number(b.price)
+        );
+    }
+
+    if (sortSelect.value === "expensive") {
+
+        filtered.sort(
+            (a, b) =>
+                Number(b.price) - Number(a.price)
+        );
+    }
+
+    if (sortSelect.value === "rating") {
+
+        filtered.sort(
+            (a, b) =>
+                Number(b.rating || 0) -
+                Number(a.rating || 0)
+        );
+    }
+
+    updateStats(filtered);
+
+    renderProducts(filtered);
+}
+
+
+function renderProducts(list) {
+
+    productsContainer.innerHTML = "";
+
+    if (products.length === 0) {
+        showMessage(t("empty"));
+        return;
+    }
+
+    if (list.length === 0) {
+        showMessage(t("notFound"));
+        return;
+    }
+
+    list.forEach(product => {
+
+        const isFavorite =
+            favorites.some(
+                item =>
+                    String(item.id) === String(product.id)
+            );
+
+        const card = document.createElement("article");
+
+        card.className = "product-card";
+
+        card.innerHTML = `
+
+            <div class="product-image">
+
+                <button
+                    class="favorite-btn ${isFavorite ? "active" : ""}"
+                    data-id="${escapeHTML(product.id)}"
+                    type="button"
+                >
+                    ${isFavorite ? "♥" : "♡"}
+                </button>
+
+                <img
+                    src="${escapeHTML(product.image)}"
+                    alt="${escapeHTML(product.name)}"
+                    loading="lazy"
+                >
+
+            </div>
+
+            <div class="product-info">
+
+                <div class="product-store">
+                    <i class="fa-solid fa-store"></i>
+                    ${escapeHTML(product.store || "Demo Catalog")}
+                </div>
+
+                <h3>
+                    ${escapeHTML(product.name)}
+                </h3>
+
+                <p class="product-brand">
+                    ${escapeHTML(product.brand || product.category || "")}
+                </p>
+
+                <div class="rating">
+                    ★ ${Number(product.rating || 0).toFixed(1)}
+                </div>
+
+                <div class="price">
+                    ${formatPrice(product.price)}
+                </div>
+
+                <a
+                    class="view-product"
+                    href="${escapeHTML(product.url || "#")}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    ${t("view")}
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+
+            </div>
+        `;
+
+        const favoriteButton =
+            card.querySelector(".favorite-btn");
+
+        favoriteButton.addEventListener("click", () => {
+            toggleFavorite(product);
+        });
+
+        productsContainer.appendChild(card);
+    });
+}
+
+
+function toggleFavorite(product) {
+
+    const index =
+        favorites.findIndex(
+            item =>
+                String(item.id) === String(product.id)
+        );
+
+    if (index === -1) {
+        favorites.push(product);
+    } else {
+        favorites.splice(index, 1);
+    }
 
     localStorage.setItem(
-        "priceCompareFavorites",
+        "pricecompareFavorites",
         JSON.stringify(favorites)
     );
 
+    applyFilters();
 }
 
-
-// ==========================================
-// FAVORITELAR SONI
-// ==========================================
-
-function updateFavorites() {
-
-    favCount.textContent =
-        favorites.length;
-
-    favTotal.textContent =
-        favorites.length;
-
-}
-
-
-// ==========================================
-// FAVORITEDAN O'CHIRISH
-// ==========================================
-
-function removeFavorite(id) {
-
-    favorites =
-        favorites.filter(
-            item =>
-                Number(item.id) !== Number(id)
-        );
-
-
-    saveFavorites();
-
-    updateFavorites();
-
-    renderFavorites();
-
-    renderProducts();
-
-}
-
-window.removeFavorite =
-    removeFavorite;
-
-
-// ==========================================
-// FAVORITES MODAL
-// ==========================================
-
-if (favoritesBtn) {
-
-    favoritesBtn.addEventListener(
-        "click",
-        () => {
-
-            renderFavorites();
-
-            favoritesModal.style.display =
-                "flex";
-
-        }
-    );
-
-}
-
-
-if (closeModal) {
-
-    closeModal.addEventListener(
-        "click",
-        () => {
-
-            favoritesModal.style.display =
-                "none";
-
-        }
-    );
-
-}
-
-
-if (favoritesModal) {
-
-    favoritesModal.addEventListener(
-        "click",
-        event => {
-
-            if (
-                event.target === favoritesModal
-            ) {
-
-                favoritesModal.style.display =
-                    "none";
-
-            }
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// FAVORITELARNI KO'RSATISH
-// ==========================================
 
 function renderFavorites() {
 
-    if (!favoritesList) return;
-
+    favoritesList.innerHTML = "";
 
     if (favorites.length === 0) {
 
         favoritesList.innerHTML = `
-
-            <div class="empty-favorites">
-
-                <i
-                    class="fa-regular fa-heart"
-                    style="font-size: 45px"
-                ></i>
-
-                <h3 style="margin-top: 15px">
-
-                    ${translations[currentLanguage].emptyFavorites}
-
-                </h3>
-
+            <div class="empty-message">
+                <p>${t("favorites")} — 0</p>
             </div>
-
         `;
 
         return;
-
     }
 
+    favorites.forEach(product => {
 
-    favoritesList.innerHTML =
-        favorites.map(product => `
+        const item =
+            document.createElement("div");
 
-            <div class="favorite-item">
+        item.className = "favorite-item";
 
+        item.innerHTML = `
 
-                <img
-                    src="${product.image}"
-                    alt="${escapeHtml(product.name)}"
-                    onerror="this.src='https://placehold.co/100x100?text=No+Image'"
+            <img
+                src="${escapeHTML(product.image)}"
+                alt="${escapeHTML(product.name)}"
+            >
+
+            <div>
+
+                <h4>${escapeHTML(product.name)}</h4>
+
+                <p>${formatPrice(product.price)}</p>
+
+                ${product.url ? `
+                <a
+                    class="view-product-favorite"
+                    href="${escapeHTML(product.url)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
                 >
-
-
-                <div class="favorite-info">
-
-                    <h3>
-                        ${escapeHtml(product.name)}
-                    </h3>
-
-                    <p>
-                        ${escapeHtml(product.store || "")}
-                        •
-                        ${formatPrice(product.price)}
-                    </p>
-
-                </div>
-
-
-                <button
-                    class="remove-favorite"
-                    onclick="removeFavorite(${Number(product.id)})"
-                >
-
-                    <i class="fa-solid fa-trash"></i>
-
-                    ${translations[currentLanguage].remove}
-
-                </button>
-
+                    ${t("view")}
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+                ` : ""}
 
             </div>
 
-        `).join("");
+            <button
+                class="remove-favorite"
+                type="button"
+            >
+                ×
+            </button>
+        `;
 
+        item
+            .querySelector(".remove-favorite")
+            .addEventListener("click", () => {
+
+                favorites = favorites.filter(
+                    favorite =>
+                        String(favorite.id) !==
+                        String(product.id)
+                );
+
+                localStorage.setItem(
+                    "pricecompareFavorites",
+                    JSON.stringify(favorites)
+                );
+
+                updateStats(products);
+
+                renderFavorites();
+
+                applyFilters();
+            });
+
+        favoritesList.appendChild(item);
+    });
 }
 
 
-// ==========================================
-// PRODUCT HAQIDA MA'LUMOT
-// ==========================================
+/* EVENTS */
 
-function viewProduct(id) {
+let searchTimer;
 
-    const product =
-        products.find(
-            item =>
-                Number(item.id) === Number(id)
-        );
+searchInput.addEventListener("input", () => {
 
+    clearTimeout(searchTimer);
 
-    if (!product) return;
+    searchTimer = setTimeout(() => {
 
-
-    alert(
-        `${product.name}\n\n` +
-        `Store: ${product.store}\n` +
-        `Brand: ${product.brand || "Unknown"}\n` +
-        `Price: ${formatPrice(product.price)}\n` +
-        `Rating: ${Number(product.rating || 0).toFixed(1)} ⭐`
-    );
-
-}
-
-window.viewProduct =
-    viewProduct;
-
-
-// ==========================================
-// ENTER BOSIB QIDIRISH
-// ==========================================
-
-searchInput.addEventListener(
-    "keydown",
-    event => {
-
-        if (event.key === "Enter") {
-
-            const query =
-                searchInput.value.trim();
-
-            searchProducts(query);
-
+        if (searchInput.value.trim().length >= 2) {
+            searchProducts();
         }
 
+    }, 500);
+});
+
+
+searchInput.addEventListener("keydown", event => {
+
+    if (event.key === "Enter") {
+        searchProducts();
     }
-);
+});
 
-
-// ==========================================
-// DO'KON FILTRI
-// ==========================================
 
 storeFilter.addEventListener(
     "change",
-    renderProducts
+    applyFilters
 );
-
-
-// ==========================================
-// SORT
-// ==========================================
 
 sortSelect.addEventListener(
     "change",
-    renderProducts
+    applyFilters
 );
 
-
-// ==========================================
-// NARX SLIDER
-// ==========================================
-
-priceRange.addEventListener(
-    "input",
-    () => {
-
-        priceDisplay.textContent =
-            `≤ ${formatPrice(
-                Number(priceRange.value)
-            )}`;
-
-        renderProducts();
-
-    }
-);
+priceRange.addEventListener("input", () => {
+    updatePriceDisplay();
+    applyFilters();
+});
 
 
-// ==========================================
-// FILTERLARNI TOZALASH
-// ==========================================
+clearFilters.addEventListener("click", () => {
 
-clearFiltersBtn.addEventListener(
-    "click",
-    () => {
+    searchInput.value = "";
 
-        searchInput.value = "";
+    storeFilter.value = "all";
+    sortSelect.value = "cheap";
 
-        storeFilter.value = "all";
+    // Set price range to max for current currency
+    const maxUSD = 2000;
+    priceRange.value = Math.round(maxUSD * rates[currentCurrency]);
 
-        sortSelect.value = "cheap";
+    updatePriceDisplay();
 
-        priceRange.value = 2000;
+    products = [];
 
+    updateStats([]);
 
-        priceDisplay.textContent =
-            `≤ ${formatPrice(2000)}`;
-
-
-        renderProducts();
-
-    }
-);
+    showMessage(t("empty"));
+});
 
 
-// ==========================================
-// TILNI O'ZGARTIRISH
-// ==========================================
-
-function changeLanguage() {
+languageSelect.addEventListener("change", () => {
 
     currentLanguage =
         languageSelect.value;
 
-
     localStorage.setItem(
-        "priceCompareLanguage",
+        "pricecompareLanguage",
         currentLanguage
     );
 
-
-    document.querySelectorAll(
-        "[data-i18n]"
-    ).forEach(element => {
-
-        const key =
-            element.dataset.i18n;
+    updateLanguage();
+});
 
 
-        if (
-            translations[currentLanguage][key]
-        ) {
+currencySelect.addEventListener("change", () => {
 
-            element.textContent =
-                translations[currentLanguage][key];
-
-        }
-
-    });
-
-
-    searchInput.placeholder =
-        translations[currentLanguage]
-            .searchPlaceholder;
-
-
-    priceDisplay.textContent =
-        `≤ ${formatPrice(
-            Number(priceRange.value)
-        )}`;
-
-
-    renderProducts();
-
-
-    if (
-        favoritesModal &&
-        favoritesModal.style.display === "flex"
-    ) {
-
-        renderFavorites();
-
-    }
-
-}
-
-
-languageSelect.addEventListener(
-    "change",
-    changeLanguage
-);
-
-
-// ==========================================
-// VALYUTANI O'ZGARTIRISH
-// ==========================================
-
-currencySelect.addEventListener(
-    "change",
-    () => {
-
-        currentCurrency =
-            currencySelect.value;
-
-
-        localStorage.setItem(
-            "priceCompareCurrency",
-            currentCurrency
-        );
-
-
-        priceDisplay.textContent =
-            `≤ ${formatPrice(
-                Number(priceRange.value)
-            )}`;
-
-
-        renderProducts();
-
-
-        if (
-            favoritesModal &&
-            favoritesModal.style.display === "flex"
-        ) {
-
-            renderFavorites();
-
-        }
-
-    }
-);
-
-
-// ==========================================
-// TEMA
-// ==========================================
-
-function setTheme(theme) {
-
-    currentTheme =
-        theme;
-
-
-    document.body.setAttribute(
-        "data-theme",
-        theme
-    );
-
+    currentCurrency =
+        currencySelect.value;
 
     localStorage.setItem(
-        "priceCompareTheme",
-        theme
+        "pricecompareCurrency",
+        currentCurrency
     );
 
+    updatePriceRangeMax();
 
-    themeOptions.forEach(option => {
+    updatePriceDisplay();
 
-        option.classList.toggle(
-            "active",
-            option.dataset.theme === theme
+    applyFilters();
+});
+
+
+themeBtn.addEventListener("click", () => {
+    themePanel.classList.toggle("show");
+});
+
+
+document.querySelectorAll(".theme-option").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        currentTheme =
+            button.dataset.theme;
+
+        document.body.dataset.theme =
+            currentTheme;
+
+        localStorage.setItem(
+            "pricecompareTheme",
+            currentTheme
         );
 
+        themePanel.classList.remove("show");
     });
-
-}
-
-
-// ==========================================
-// THEME PANEL
-// ==========================================
-
-themeBtn.addEventListener(
-    "click",
-    event => {
-
-        event.stopPropagation();
-
-        themePanel.classList.toggle(
-            "show"
-        );
-
-    }
-);
-
-
-// ==========================================
-// 10 TA TEMANI TANLASH
-// ==========================================
-
-themeOptions.forEach(option => {
-
-    option.addEventListener(
-        "click",
-        () => {
-
-            setTheme(
-                option.dataset.theme
-            );
-
-
-            themePanel.classList.remove(
-                "show"
-            );
-
-        }
-    );
 
 });
 
 
-// ==========================================
-// TASHQARIGA BOSILSA YOPILADI
-// ==========================================
+favoritesBtn.addEventListener("click", () => {
 
-document.addEventListener(
-    "click",
-    event => {
+    renderFavorites();
 
-        if (
-            themePanel &&
-            themeBtn &&
-            !themePanel.contains(event.target) &&
-            !themeBtn.contains(event.target)
-        ) {
+    favoritesModal.classList.add("show");
+});
 
-            themePanel.classList.remove(
-                "show"
-            );
 
-        }
+closeModal.addEventListener("click", () => {
+    favoritesModal.classList.remove("show");
+});
 
+
+favoritesModal.addEventListener("click", event => {
+
+    if (event.target === favoritesModal) {
+        favoritesModal.classList.remove("show");
     }
-);
+
+});
 
 
-// ==========================================
-// START
-// ==========================================
+/* START */
 
-function startApp() {
+document.body.dataset.theme = currentTheme;
 
-    // Saqlangan til
-    languageSelect.value =
-        currentLanguage;
+languageSelect.value = currentLanguage;
+currencySelect.value = currentCurrency;
 
+updatePriceRangeMax();
 
-    // Saqlangan valuta
-    currencySelect.value =
-        currentCurrency;
+updatePriceDisplay();
+updateLanguage();
+updateStats([]);
 
+searchInput.value = "iphone";
 
-    // Saqlangan tema
-    setTheme(currentTheme);
-
-
-    // Tilni yuklash
-    changeLanguage();
-
-
-    // Favorites soni
-    updateFavorites();
-
-
-    // Narx slider yozuvi
-    priceDisplay.textContent =
-        `≤ ${formatPrice(
-            Number(priceRange.value)
-        )}`;
-
-
-    // Boshlang'ich mahsulot qidiruvi
-    searchProducts("phone");
-
-}
-
-
-// APP START
-
-startApp();
+searchProducts();
