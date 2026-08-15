@@ -41,13 +41,13 @@
 
     <div class="header-actions">
 
-        <select id="languageSelect">
+        <select id="languageSelect" aria-label="Language">
             <option value="ru">RU</option>
             <option value="uz">UZ</option>
             <option value="en">EN</option>
         </select>
 
-        <select id="currencySelect">
+        <select id="currencySelect" aria-label="Currency">
             <option value="USD">USD $</option>
             <option value="UZS">UZS so'm</option>
             <option value="EUR">EUR €</option>
@@ -64,6 +64,11 @@
             <span id="favCount">0</span>
         </button>
 
+        <button id="compareNavBtn" class="header-btn compare-header-btn" type="button">
+            <i class="fa-solid fa-code-compare"></i>
+            <span id="compareCount">0</span>
+        </button>
+
     </div>
 
 </header>
@@ -75,8 +80,8 @@
 
     <button class="theme-option" data-theme="light">☀️ Light</button>
     <button class="theme-option" data-theme="dark">🌙 Dark</button>
-    <button class="theme-option" data-theme="blue">🔵 Blue</button>
-    <button class="theme-option" data-theme="purple">🟣 Purple</button>
+    <button class="theme-option" data-theme="blue">🔵 Blue Neon</button>
+    <button class="theme-option" data-theme="purple">🟣 Purple Neon</button>
     <button class="theme-option" data-theme="cyber">🤖 Cyber</button>
     <button class="theme-option" data-theme="aurora">🌌 Aurora</button>
     <button class="theme-option" data-theme="galaxy">🚀 Galaxy</button>
@@ -92,18 +97,13 @@
     <h1 id="heroTitle">Сравнивайте цены за несколько секунд</h1>
 
     <p id="heroText">
-        Найдите самое выгодное предложение среди популярных товаров
+        Найдите товары и сравните цены
     </p>
 
 </section>
 
 
 <section class="filters">
-
-    <select id="storeFilter">
-        <option value="all">Все источники</option>
-        <option value="Demo Catalog">Demo Catalog</option>
-    </select>
 
     <select id="sort">
         <option value="cheap">Сначала дешёвые</option>
@@ -112,6 +112,7 @@
     </select>
 
     <div class="range-box">
+
         <input
             type="range"
             id="priceRange"
@@ -120,7 +121,8 @@
             value="2000"
         >
 
-        <span id="priceDisplay">до $2000</span>
+        <span id="priceDisplay">≤ $2000.00</span>
+
     </div>
 
     <button id="clearFilters" class="clear-btn" type="button">
@@ -147,7 +149,7 @@
 
         <div>
             <strong id="storesCount">1</strong>
-            <span id="sourcesText">Источников</span>
+            <span id="sourcesText">Источник</span>
         </div>
     </div>
 
@@ -155,7 +157,7 @@
         <i class="fa-solid fa-dollar-sign"></i>
 
         <div>
-            <strong id="avgPrice">$0</strong>
+            <strong id="avgPrice">$0.00</strong>
             <span id="averageText">Средняя цена</span>
         </div>
     </div>
@@ -172,11 +174,97 @@
 </section>
 
 
-<main>
+<main id="productsSection">
 
-    <div id="products" class="products-grid"></div>
+    <div id="products" class="products-grid">
+        <div class="loading">Loading...</div>
+    </div>
 
 </main>
+
+
+<section id="compareSection" class="comparison-section">
+
+    <div class="comparison-top">
+
+        <div>
+            <span class="comparison-eyebrow">
+                <i class="fa-solid fa-code-compare"></i>
+                PriceCompare
+            </span>
+
+            <h2 id="compareTitle">Сравнение товаров</h2>
+
+            <p id="compareSubtitle">
+                Выберите до 4 товаров и сравните их характеристики
+            </p>
+        </div>
+
+        <div class="comparison-actions">
+
+            <button
+                id="compareBackBtn"
+                class="compare-secondary-btn"
+                type="button"
+            >
+                <i class="fa-solid fa-arrow-left"></i>
+                <span id="compareBackText">К товарам</span>
+            </button>
+
+            <button
+                id="clearComparison"
+                class="compare-danger-btn"
+                type="button"
+            >
+                <i class="fa-solid fa-trash"></i>
+                <span id="clearCompareText">Очистить</span>
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div id="compareEmpty" class="compare-empty">
+
+        <div class="compare-empty-icon">
+            <i class="fa-solid fa-scale-balanced"></i>
+        </div>
+
+        <h3 id="compareEmptyTitle">
+            Пока ничего не выбрано
+        </h3>
+
+        <p id="compareEmptyText">
+            Добавьте минимум 2 товара для сравнения.
+        </p>
+
+        <button
+            id="compareGoProducts"
+            class="compare-primary-btn"
+            type="button"
+        >
+            <i class="fa-solid fa-box-open"></i>
+            <span id="compareGoProductsText">Посмотреть товары</span>
+        </button>
+
+    </div>
+
+
+    <div id="compareTableWrap" class="compare-table-wrap">
+
+        <div class="compare-table-scroll">
+
+            <table
+                id="compareTable"
+                class="compare-products-table"
+            ></table>
+
+        </div>
+
+    </div>
+
+</section>
 
 
 <div id="favoritesModal" class="modal">
@@ -184,9 +272,15 @@
     <div class="modal-content">
 
         <div class="modal-header">
-            <h2 id="favoritesTitle">Избранное</h2>
 
-            <button id="closeModal" type="button">&times;</button>
+            <h2 id="favoritesTitle">
+                Избранное
+            </h2>
+
+            <button id="closeModal" type="button">
+                &times;
+            </button>
+
         </div>
 
         <div id="favoritesList"></div>

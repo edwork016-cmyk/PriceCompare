@@ -6,16 +6,20 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// ==============================
+// MIDDLEWARE
+// ==============================
 app.use(cors());
 app.use(express.json());
 
-// Public papkasini ulash
+// ==============================
+// PUBLIC FOLDER
+// ==============================
 app.use(express.static(path.join(__dirname, "public")));
 
-// ==========================================
+// ==============================
 // API STATUS
-// ==========================================
+// ==============================
 app.get("/api/status", (req, res) => {
     res.json({
         success: true,
@@ -25,9 +29,9 @@ app.get("/api/status", (req, res) => {
     });
 });
 
-// ==========================================
+// ==============================
 // PRODUCT SEARCH API
-// ==========================================
+// ==============================
 app.get("/api/search", async (req, res) => {
     const query = String(req.query.q || "").trim();
 
@@ -44,7 +48,7 @@ app.get("/api/search", async (req, res) => {
         );
 
         if (!response.ok) {
-            throw new Error("DummyJSON API xatosi");
+            throw new Error(`DummyJSON API xatosi: ${response.status}`);
         }
 
         const data = await response.json();
@@ -75,7 +79,7 @@ app.get("/api/search", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Search error:", error);
+        console.error("Search error:", error.message);
 
         res.status(500).json({
             success: false,
@@ -84,14 +88,25 @@ app.get("/api/search", async (req, res) => {
     }
 });
 
-// ==========================================
-// LOCAL SERVER
-// ==========================================
+// ==============================
+// MAIN PAGE
+// ==============================
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// ==============================
+// START SERVER
+// ==============================
 if (require.main === module) {
     app.listen(PORT, () => {
+        console.log("");
+        console.log("======================================");
         console.log(`PriceCompare ishlayapti: http://localhost:${PORT}`);
+        console.log("======================================");
+        console.log("");
     });
 }
 
-// Vercel uchun export
+// Vercel uchun
 module.exports = app;

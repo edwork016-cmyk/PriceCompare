@@ -1,18 +1,5 @@
-const API_URL = "/api/search";
-
 const searchInput = document.getElementById("search");
 const productsContainer = document.getElementById("products");
-
-const storeFilter = document.getElementById("storeFilter");
-const sortSelect = document.getElementById("sort");
-const priceRange = document.getElementById("priceRange");
-const priceDisplay = document.getElementById("priceDisplay");
-const clearFilters = document.getElementById("clearFilters");
-
-const countElement = document.getElementById("count");
-const avgPriceElement = document.getElementById("avgPrice");
-const favCountElement = document.getElementById("favCount");
-const favTotalElement = document.getElementById("favTotal");
 
 const languageSelect = document.getElementById("languageSelect");
 const currencySelect = document.getElementById("currencySelect");
@@ -22,97 +9,166 @@ const themePanel = document.getElementById("themePanel");
 
 const favoritesBtn = document.getElementById("favoritesBtn");
 const favoritesModal = document.getElementById("favoritesModal");
-const favoritesList = document.getElementById("favoritesList");
 const closeModal = document.getElementById("closeModal");
+const favoritesList = document.getElementById("favoritesList");
+
+const sortSelect = document.getElementById("sort");
+const priceRange = document.getElementById("priceRange");
+const priceDisplay = document.getElementById("priceDisplay");
+const clearFilters = document.getElementById("clearFilters");
+
+const count = document.getElementById("count");
+const avgPrice = document.getElementById("avgPrice");
+const favCount = document.getElementById("favCount");
+const favTotal = document.getElementById("favTotal");
+
+const compareNavBtn = document.getElementById("compareNavBtn");
+const compareCount = document.getElementById("compareCount");
+const compareSection = document.getElementById("compareSection");
+const productsSection = document.getElementById("productsSection");
+
+const compareBackBtn = document.getElementById("compareBackBtn");
+const compareGoProducts = document.getElementById("compareGoProducts");
+const clearComparison = document.getElementById("clearComparison");
+
+const compareEmpty = document.getElementById("compareEmpty");
+const compareTableWrap = document.getElementById("compareTableWrap");
+const compareTable = document.getElementById("compareTable");
+
 
 let products = [];
-
-let favorites = JSON.parse(
-    localStorage.getItem("pricecompareFavorites")
-) || [];
+let favorites = JSON.parse(localStorage.getItem("pricecompare_favorites")) || [];
+let comparison = JSON.parse(localStorage.getItem("pricecompare_comparison")) || [];
 
 let currentLanguage =
-    localStorage.getItem("pricecompareLanguage") || "ru";
+    localStorage.getItem("pricecompare_language") || "ru";
 
 let currentCurrency =
-    localStorage.getItem("pricecompareCurrency") || "USD";
+    localStorage.getItem("pricecompare_currency") || "USD";
 
 let currentTheme =
-    localStorage.getItem("pricecompareTheme") || "light";
+    localStorage.getItem("pricecompare_theme") || "light";
 
 
 const translations = {
+
     ru: {
         search: "Поиск товара...",
         heroTitle: "Сравнивайте цены за несколько секунд",
-        heroText: "Найдите самое выгодное предложение среди популярных товаров",
-        allSources: "Все источники",
+        heroText: "Найдите товары и сравните цены",
         cheap: "Сначала дешёвые",
         expensive: "Сначала дорогие",
         rating: "По рейтингу",
         clear: "Очистить",
         products: "Товаров найдено",
-        sources: "Источников",
+        sources: "Источник",
         average: "Средняя цена",
         favorites: "В избранном",
-        view: "Посмотреть товар",
-        favoriteTitle: "Избранное",
-        empty: "Введите название товара для поиска 🔎",
-        loading: "Товары загружаются...",
-        notFound: "Товары не найдены",
-        footer: "Сервис поиска и сравнения товаров."
+        view: "Открыть",
+        compare: "Сравнить",
+        added: "Добавлено",
+        noProducts: "Товары не найдены",
+        loading: "Загрузка товаров...",
+        footer: "Сервис поиска и сравнения товаров.",
+        favoritesTitle: "Избранное",
+        noFavorites: "Избранных товаров пока нет",
+        remove: "Удалить",
+        compareTitle: "Сравнение товаров",
+        compareSubtitle: "Выберите до 4 товаров и сравните их характеристики",
+        back: "К товарам",
+        emptyCompare: "Пока ничего не выбрано",
+        emptyCompareText: "Добавьте минимум 2 товара для сравнения.",
+        showProducts: "Посмотреть товары",
+        clearCompare: "Очистить",
+        name: "Название",
+        brand: "Бренд",
+        price: "Цена",
+        ratingLabel: "Рейтинг",
+        stock: "Количество",
+        store: "Источник"
     },
 
     uz: {
         search: "Mahsulot qidirish...",
         heroTitle: "Narxlarni bir necha soniyada solishtiring",
-        heroText: "Mashhur mahsulotlar orasidan eng yaxshi taklifni toping",
-        allSources: "Barcha manbalar",
+        heroText: "Mahsulotlarni toping va narxlarni taqqoslang",
         cheap: "Avval arzonlari",
         expensive: "Avval qimmatlari",
         rating: "Reyting bo'yicha",
         clear: "Tozalash",
         products: "Mahsulot topildi",
-        sources: "Manbalar",
+        sources: "Manba",
         average: "O'rtacha narx",
         favorites: "Sevimlilarda",
-        view: "Mahsulotni ko'rish",
-        favoriteTitle: "Sevimlilar",
-        empty: "Qidirish uchun mahsulot nomini yozing 🔎",
+        view: "Ochish",
+        compare: "Taqqoslash",
+        added: "Qo'shilgan",
+        noProducts: "Mahsulotlar topilmadi",
         loading: "Mahsulotlar yuklanmoqda...",
-        notFound: "Mahsulotlar topilmadi",
-        footer: "Mahsulotlarni qidirish va solishtirish xizmati."
+        footer: "Mahsulotlarni qidirish va narxlarni taqqoslash xizmati.",
+        favoritesTitle: "Sevimlilar",
+        noFavorites: "Hozircha sevimli mahsulotlar yo'q",
+        remove: "O'chirish",
+        compareTitle: "Mahsulotlarni taqqoslash",
+        compareSubtitle: "4 tagacha mahsulot tanlab, xususiyatlarini solishtiring",
+        back: "Mahsulotlarga",
+        emptyCompare: "Hali mahsulot tanlanmagan",
+        emptyCompareText: "Taqqoslash uchun kamida 2 ta mahsulot qo'shing.",
+        showProducts: "Mahsulotlarni ko'rish",
+        clearCompare: "Tozalash",
+        name: "Nomi",
+        brand: "Brend",
+        price: "Narxi",
+        ratingLabel: "Reyting",
+        stock: "Soni",
+        store: "Manba"
     },
 
     en: {
-        search: "Search for a product...",
-        heroTitle: "Compare prices in just a few seconds",
-        heroText: "Find the best offer among popular products",
-        allSources: "All sources",
+        search: "Search product...",
+        heroTitle: "Compare prices in seconds",
+        heroText: "Find products and compare prices",
         cheap: "Cheapest first",
         expensive: "Most expensive first",
         rating: "By rating",
         clear: "Clear",
         products: "Products found",
-        sources: "Sources",
+        sources: "Source",
         average: "Average price",
-        favorites: "In favorites",
-        view: "View product",
-        favoriteTitle: "Favorites",
-        empty: "Enter a product name to search 🔎",
+        favorites: "Favorites",
+        view: "Open",
+        compare: "Compare",
+        added: "Added",
+        noProducts: "No products found",
         loading: "Loading products...",
-        notFound: "No products found",
-        footer: "Product search and comparison service."
+        footer: "Product search and price comparison service.",
+        favoritesTitle: "Favorites",
+        noFavorites: "No favorite products yet",
+        remove: "Remove",
+        compareTitle: "Product comparison",
+        compareSubtitle: "Choose up to 4 products and compare their features",
+        back: "Back to products",
+        emptyCompare: "Nothing selected yet",
+        emptyCompareText: "Add at least 2 products to compare.",
+        showProducts: "View products",
+        clearCompare: "Clear",
+        name: "Name",
+        brand: "Brand",
+        price: "Price",
+        ratingLabel: "Rating",
+        stock: "Stock",
+        store: "Source"
     }
+
 };
 
 
-const rates = {
+const currencyRates = {
     USD: 1,
-    UZS: 12500,
+    UZS: 12650,
     EUR: 0.92,
-    JPY: 150,
-    RUB: 100
+    JPY: 155,
+    RUB: 82
 };
 
 
@@ -134,54 +190,572 @@ function escapeHTML(value) {
 function formatPrice(usdPrice) {
 
     const value =
-        Number(usdPrice || 0) * rates[currentCurrency];
+        Number(usdPrice || 0) *
+        currencyRates[currentCurrency];
 
-    if (currentCurrency === "UZS") {
-        return `${Math.round(value).toLocaleString("uz-UZ")} so'm`;
-    }
-
-    if (currentCurrency === "EUR") {
-        return `€${value.toFixed(2)}`;
-    }
-
-    if (currentCurrency === "JPY") {
-        return `¥${Math.round(value).toLocaleString()}`;
-    }
-
-    if (currentCurrency === "RUB") {
-        return `₽${Math.round(value).toLocaleString()}`;
-    }
-
-    return `$${value.toFixed(2)}`;
-}
-
-
-function updatePriceRangeMax() {
-    // Update slider max based on current currency
-    // We want max $2000 USD equivalent
-    const maxUSD = 2000;
-    const maxInCurrentCurrency = maxUSD * rates[currentCurrency];
-    priceRange.max = Math.round(maxInCurrentCurrency);
-}
-
-
-function getMaxPriceInUSD() {
-    // The slider value is in the current currency, so divide by rate to get USD
-    return Number(priceRange.value) / rates[currentCurrency];
+    return new Intl.NumberFormat(
+        currentLanguage === "uz"
+            ? "uz-UZ"
+            : currentLanguage === "ru"
+                ? "ru-RU"
+                : "en-US",
+        {
+            style: "currency",
+            currency: currentCurrency,
+            maximumFractionDigits:
+                currentCurrency === "UZS" ||
+                currentCurrency === "JPY"
+                    ? 0
+                    : 2
+        }
+    ).format(value);
 }
 
 
 function updatePriceDisplay() {
-    // Get the max price in USD first, then format it in current currency
-    const maxPriceUSD = getMaxPriceInUSD();
+
+    const maxPrice = Number(priceRange.value);
+
     priceDisplay.textContent =
-        `≤ ${formatPrice(maxPriceUSD)}`;
+        "≤ " + formatPrice(maxPrice);
+}
+
+
+function saveFavorites() {
+    localStorage.setItem(
+        "pricecompare_favorites",
+        JSON.stringify(favorites)
+    );
+}
+
+
+function saveComparison() {
+    localStorage.setItem(
+        "pricecompare_comparison",
+        JSON.stringify(comparison)
+    );
+}
+
+
+function isFavorite(id) {
+    return favorites.some(
+        product => product.id === id
+    );
+}
+
+
+function isCompared(id) {
+    return comparison.some(
+        product => product.id === id
+    );
+}
+
+
+function updateCounters() {
+
+    favCount.textContent = favorites.length;
+    favTotal.textContent = favorites.length;
+    compareCount.textContent = comparison.length;
+}
+
+
+function updateStats(list) {
+
+    count.textContent = list.length;
+
+    if (list.length === 0) {
+        avgPrice.textContent = formatPrice(0);
+        return;
+    }
+
+    const total = list.reduce(
+        (sum, product) =>
+            sum + Number(product.price || 0),
+        0
+    );
+
+    avgPrice.textContent =
+        formatPrice(total / list.length);
+}
+
+
+function getFilteredProducts() {
+
+    const query =
+        searchInput.value
+            .trim()
+            .toLowerCase();
+
+    const maxPrice =
+        Number(priceRange.value);
+
+    let result =
+        products.filter(product => {
+
+            const productText =
+                [
+                    product.name,
+                    product.brand,
+                    product.category,
+                    product.store
+                ]
+                    .join(" ")
+                    .toLowerCase();
+
+            return (
+                productText.includes(query) &&
+                Number(product.price || 0) <= maxPrice
+            );
+        });
+
+
+    if (sortSelect.value === "cheap") {
+
+        result.sort(
+            (a, b) =>
+                Number(a.price) - Number(b.price)
+        );
+
+    } else if (
+        sortSelect.value === "expensive"
+    ) {
+
+        result.sort(
+            (a, b) =>
+                Number(b.price) - Number(a.price)
+        );
+
+    } else if (
+        sortSelect.value === "rating"
+    ) {
+
+        result.sort(
+            (a, b) =>
+                Number(b.rating || 0) -
+                Number(a.rating || 0)
+        );
+
+    }
+
+    return result;
+}
+
+
+function renderProducts() {
+
+    const filteredProducts =
+        getFilteredProducts();
+
+    updateStats(filteredProducts);
+
+    if (filteredProducts.length === 0) {
+
+        productsContainer.innerHTML = `
+            <div class="empty-message">
+                <i class="fa-solid fa-box-open"></i>
+                <p>${t("noProducts")}</p>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    productsContainer.innerHTML =
+        filteredProducts.map(product => {
+
+            const favorite =
+                isFavorite(product.id);
+
+            const compared =
+                isCompared(product.id);
+
+            return `
+                <article class="product-card">
+
+                    <div class="product-image">
+
+                        <img
+                            src="${escapeHTML(product.image)}"
+                            alt="${escapeHTML(product.name)}"
+                            onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'"
+                        >
+
+                        <button
+                            class="favorite-btn ${favorite ? "active" : ""}"
+                            data-favorite="${escapeHTML(product.id)}"
+                            type="button"
+                        >
+                            <i class="fa-${favorite ? "solid" : "regular"} fa-heart"></i>
+                        </button>
+
+                    </div>
+
+
+                    <div class="product-info">
+
+                        <div class="product-store">
+                            ${escapeHTML(product.store || "Demo Catalog")}
+                        </div>
+
+                        <h3>
+                            ${escapeHTML(product.name)}
+                        </h3>
+
+                        <div class="product-brand">
+                            ${escapeHTML(product.brand || "No brand")}
+                        </div>
+
+                        <div class="rating">
+                            <i class="fa-solid fa-star"></i>
+                            ${Number(product.rating || 0).toFixed(1)}
+                        </div>
+
+                        <div class="price">
+                            ${formatPrice(product.price)}
+                        </div>
+
+
+                        <div class="product-actions">
+
+                            <a
+                                href="${escapeHTML(product.url || "#")}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="view-product"
+                            >
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                ${t("view")}
+                            </a>
+
+                            <button
+                                class="compare-btn ${compared ? "active" : ""}"
+                                data-compare="${escapeHTML(product.id)}"
+                                type="button"
+                                title="${compared ? t("added") : t("compare")}"
+                            >
+                                <i class="fa-solid fa-code-compare"></i>
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+            `;
+        }).join("");
+
+
+    document
+        .querySelectorAll("[data-favorite]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+                    toggleFavorite(
+                        button.dataset.favorite
+                    );
+                }
+            );
+
+        });
+
+
+    document
+        .querySelectorAll("[data-compare]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+                    toggleComparison(
+                        button.dataset.compare
+                    );
+                }
+            );
+
+        });
+
+}
+
+
+function toggleFavorite(id) {
+
+    const product =
+        products.find(
+            item => String(item.id) === String(id)
+        );
+
+    if (!product) return;
+
+
+    if (isFavorite(id)) {
+
+        favorites =
+            favorites.filter(
+                item =>
+                    String(item.id) !== String(id)
+            );
+
+    } else {
+
+        favorites.push(product);
+
+    }
+
+
+    saveFavorites();
+    updateCounters();
+    renderProducts();
+    renderFavorites();
+}
+
+
+function renderFavorites() {
+
+    if (favorites.length === 0) {
+
+        favoritesList.innerHTML = `
+            <div class="empty-message">
+                ${t("noFavorites")}
+            </div>
+        `;
+
+        return;
+    }
+
+
+    favoritesList.innerHTML =
+        favorites.map(product => `
+            <div class="favorite-item">
+
+                <img
+                    src="${escapeHTML(product.image)}"
+                    alt="${escapeHTML(product.name)}"
+                >
+
+                <div>
+                    <h4>
+                        ${escapeHTML(product.name)}
+                    </h4>
+
+                    <p>
+                        ${formatPrice(product.price)}
+                    </p>
+                </div>
+
+                <button
+                    class="remove-favorite"
+                    data-remove-favorite="${escapeHTML(product.id)}"
+                    type="button"
+                >
+                    ${t("remove")}
+                </button>
+
+            </div>
+        `).join("");
+
+
+    document
+        .querySelectorAll("[data-remove-favorite]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+                    toggleFavorite(
+                        button.dataset.removeFavorite
+                    );
+                }
+            );
+
+        });
+
+}
+
+
+function toggleComparison(id) {
+
+    const product =
+        products.find(
+            item => String(item.id) === String(id)
+        );
+
+    if (!product) return;
+
+
+    if (isCompared(id)) {
+
+        comparison =
+            comparison.filter(
+                item =>
+                    String(item.id) !== String(id)
+            );
+
+    } else {
+
+        if (comparison.length >= 4) {
+            alert("Maximum 4 products!");
+            return;
+        }
+
+        comparison.push(product);
+
+    }
+
+
+    saveComparison();
+    updateCounters();
+    renderProducts();
+    renderComparison();
+}
+
+
+function renderComparison() {
+
+    if (comparison.length < 2) {
+
+        compareEmpty.style.display = "flex";
+        compareTableWrap.style.display = "none";
+
+        compareEmpty.querySelector("h3").textContent =
+            t("emptyCompare");
+
+        compareEmpty.querySelector("p").textContent =
+            t("emptyCompareText");
+
+        return;
+    }
+
+
+    compareEmpty.style.display = "none";
+    compareTableWrap.style.display = "block";
+
+
+    const rows = [
+
+        {
+            label: t("name"),
+            render: product =>
+                escapeHTML(product.name)
+        },
+
+        {
+            label: t("brand"),
+            render: product =>
+                escapeHTML(product.brand || "—")
+        },
+
+        {
+            label: t("price"),
+            render: product =>
+                formatPrice(product.price)
+        },
+
+        {
+            label: t("ratingLabel"),
+            render: product =>
+                `${Number(product.rating || 0).toFixed(1)} ⭐`
+        },
+
+        {
+            label: t("stock"),
+            render: product =>
+                escapeHTML(product.stock ?? "—")
+        },
+
+        {
+            label: t("store"),
+            render: product =>
+                escapeHTML(product.store || "Demo Catalog")
+        }
+
+    ];
+
+
+    compareTable.innerHTML = `
+
+        <thead>
+
+            <tr>
+
+                <th>—</th>
+
+                ${comparison.map(product => `
+
+                    <th>
+
+                        <img
+                            src="${escapeHTML(product.image)}"
+                            alt="${escapeHTML(product.name)}"
+                        >
+
+                        <p>
+                            ${escapeHTML(product.name)}
+                        </p>
+
+                        <button
+                            class="compare-remove"
+                            data-remove-compare="${escapeHTML(product.id)}"
+                            type="button"
+                        >
+                            ${t("remove")}
+                        </button>
+
+                    </th>
+
+                `).join("")}
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+            ${rows.map(row => `
+
+                <tr>
+
+                    <th>
+                        ${row.label}
+                    </th>
+
+                    ${comparison.map(product => `
+                        <td>
+                            ${row.render(product)}
+                        </td>
+                    `).join("")}
+
+                </tr>
+
+            `).join("")}
+
+        </tbody>
+
+    `;
+
+
+    document
+        .querySelectorAll("[data-remove-compare]")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+                    toggleComparison(
+                        button.dataset.removeCompare
+                    );
+                }
+            );
+
+        });
+
 }
 
 
 function updateLanguage() {
-
-    document.documentElement.lang = currentLanguage;
 
     searchInput.placeholder = t("search");
 
@@ -191,17 +765,9 @@ function updateLanguage() {
     document.getElementById("heroText").textContent =
         t("heroText");
 
-    storeFilter.options[0].textContent =
-        t("allSources");
-
-    sortSelect.options[0].textContent =
-        t("cheap");
-
-    sortSelect.options[1].textContent =
-        t("expensive");
-
-    sortSelect.options[2].textContent =
-        t("rating");
+    sortSelect.options[0].text = t("cheap");
+    sortSelect.options[1].text = t("expensive");
+    sortSelect.options[2].text = t("rating");
 
     document.getElementById("clearText").textContent =
         t("clear");
@@ -219,512 +785,342 @@ function updateLanguage() {
         t("favorites");
 
     document.getElementById("favoritesTitle").textContent =
-        t("favoriteTitle");
+        t("favoritesTitle");
+
+    document.getElementById("compareTitle").textContent =
+        t("compareTitle");
+
+    document.getElementById("compareSubtitle").textContent =
+        t("compareSubtitle");
+
+    document.getElementById("compareBackText").textContent =
+        t("back");
+
+    document.getElementById("clearCompareText").textContent =
+        t("clearCompare");
+
+    document.getElementById("compareEmptyTitle").textContent =
+        t("emptyCompare");
+
+    document.getElementById("compareEmptyText").textContent =
+        t("emptyCompareText");
+
+    document.getElementById("compareGoProductsText").textContent =
+        t("showProducts");
 
     document.getElementById("footerText").textContent =
         t("footer");
 
-    applyFilters();
+    document.documentElement.lang =
+        currentLanguage;
+
+    renderProducts();
+    renderFavorites();
+    renderComparison();
+    updatePriceDisplay();
 }
 
 
-function updateStats(list) {
+/* ================= API ================= */
 
-    countElement.textContent = list.length;
-
-    if (list.length === 0) {
-        avgPriceElement.textContent = formatPrice(0);
-    } else {
-
-        const total =
-            list.reduce(
-                (sum, product) =>
-                    sum + Number(product.price || 0),
-                0
-            );
-
-        avgPriceElement.textContent =
-            formatPrice(total / list.length);
-    }
-
-    favCountElement.textContent = favorites.length;
-    favTotalElement.textContent = favorites.length;
-}
-
-
-function showMessage(message) {
-
-    productsContainer.innerHTML = `
-        <div class="empty-message">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <p>${escapeHTML(message)}</p>
-        </div>
-    `;
-}
-
-
-function showLoading() {
+async function searchProducts(query) {
 
     productsContainer.innerHTML = `
         <div class="loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <p>${escapeHTML(t("loading"))}</p>
+            ${t("loading")}
         </div>
     `;
-}
 
-
-async function searchProducts() {
-
-    const query = searchInput.value.trim();
-
-    if (!query) {
-        products = [];
-        updateStats([]);
-        showMessage(t("empty"));
-        return;
-    }
-
-    showLoading();
 
     try {
 
-        const response = await fetch(
-            `${API_URL}?q=${encodeURIComponent(query)}`
-        );
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            throw new Error(
-                data.message || "Search error"
+        const response =
+            await fetch(
+                `/api/search?q=${encodeURIComponent(query)}`
             );
+
+        if (!response.ok) {
+            throw new Error("API error");
         }
 
-        products = data.products || [];
+        const data =
+            await response.json();
 
-        applyFilters();
+        products =
+            data.products || [];
+
+        renderProducts();
 
     } catch (error) {
 
         console.error(error);
 
-        products = [];
+        productsContainer.innerHTML = `
+            <div class="empty-message">
+                ${t("noProducts")}
+            </div>
+        `;
 
+        products = [];
         updateStats([]);
 
-        showMessage("❌ " + error.message);
     }
+
 }
 
 
-function applyFilters() {
-
-    let filtered = [...products];
-
-    const maxPrice = getMaxPriceInUSD();
-
-    filtered = filtered.filter(
-        product =>
-            Number(product.price || 0) <= maxPrice
-    );
-
-    if (storeFilter.value !== "all") {
-
-        filtered = filtered.filter(
-            product =>
-                product.store === storeFilter.value
-        );
-    }
-
-    if (sortSelect.value === "cheap") {
-
-        filtered.sort(
-            (a, b) =>
-                Number(a.price) - Number(b.price)
-        );
-    }
-
-    if (sortSelect.value === "expensive") {
-
-        filtered.sort(
-            (a, b) =>
-                Number(b.price) - Number(a.price)
-        );
-    }
-
-    if (sortSelect.value === "rating") {
-
-        filtered.sort(
-            (a, b) =>
-                Number(b.rating || 0) -
-                Number(a.rating || 0)
-        );
-    }
-
-    updateStats(filtered);
-
-    renderProducts(filtered);
-}
-
-
-function renderProducts(list) {
-
-    productsContainer.innerHTML = "";
-
-    if (products.length === 0) {
-        showMessage(t("empty"));
-        return;
-    }
-
-    if (list.length === 0) {
-        showMessage(t("notFound"));
-        return;
-    }
-
-    list.forEach(product => {
-
-        const isFavorite =
-            favorites.some(
-                item =>
-                    String(item.id) === String(product.id)
-            );
-
-        const card = document.createElement("article");
-
-        card.className = "product-card";
-
-        card.innerHTML = `
-
-            <div class="product-image">
-
-                <button
-                    class="favorite-btn ${isFavorite ? "active" : ""}"
-                    data-id="${escapeHTML(product.id)}"
-                    type="button"
-                >
-                    ${isFavorite ? "♥" : "♡"}
-                </button>
-
-                <img
-                    src="${escapeHTML(product.image)}"
-                    alt="${escapeHTML(product.name)}"
-                    loading="lazy"
-                >
-
-            </div>
-
-            <div class="product-info">
-
-                <div class="product-store">
-                    <i class="fa-solid fa-store"></i>
-                    ${escapeHTML(product.store || "Demo Catalog")}
-                </div>
-
-                <h3>
-                    ${escapeHTML(product.name)}
-                </h3>
-
-                <p class="product-brand">
-                    ${escapeHTML(product.brand || product.category || "")}
-                </p>
-
-                <div class="rating">
-                    ★ ${Number(product.rating || 0).toFixed(1)}
-                </div>
-
-                <div class="price">
-                    ${formatPrice(product.price)}
-                </div>
-
-                <a
-                    class="view-product"
-                    href="${escapeHTML(product.url || "#")}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    ${t("view")}
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                </a>
-
-            </div>
-        `;
-
-        const favoriteButton =
-            card.querySelector(".favorite-btn");
-
-        favoriteButton.addEventListener("click", () => {
-            toggleFavorite(product);
-        });
-
-        productsContainer.appendChild(card);
-    });
-}
-
-
-function toggleFavorite(product) {
-
-    const index =
-        favorites.findIndex(
-            item =>
-                String(item.id) === String(product.id)
-        );
-
-    if (index === -1) {
-        favorites.push(product);
-    } else {
-        favorites.splice(index, 1);
-    }
-
-    localStorage.setItem(
-        "pricecompareFavorites",
-        JSON.stringify(favorites)
-    );
-
-    applyFilters();
-}
-
-
-function renderFavorites() {
-
-    favoritesList.innerHTML = "";
-
-    if (favorites.length === 0) {
-
-        favoritesList.innerHTML = `
-            <div class="empty-message">
-                <p>${t("favorites")} — 0</p>
-            </div>
-        `;
-
-        return;
-    }
-
-    favorites.forEach(product => {
-
-        const item =
-            document.createElement("div");
-
-        item.className = "favorite-item";
-
-        item.innerHTML = `
-
-            <img
-                src="${escapeHTML(product.image)}"
-                alt="${escapeHTML(product.name)}"
-            >
-
-            <div>
-
-                <h4>${escapeHTML(product.name)}</h4>
-
-                <p>${formatPrice(product.price)}</p>
-
-                ${product.url ? `
-                <a
-                    class="view-product-favorite"
-                    href="${escapeHTML(product.url)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    ${t("view")}
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                </a>
-                ` : ""}
-
-            </div>
-
-            <button
-                class="remove-favorite"
-                type="button"
-            >
-                ×
-            </button>
-        `;
-
-        item
-            .querySelector(".remove-favorite")
-            .addEventListener("click", () => {
-
-                favorites = favorites.filter(
-                    favorite =>
-                        String(favorite.id) !==
-                        String(product.id)
-                );
-
-                localStorage.setItem(
-                    "pricecompareFavorites",
-                    JSON.stringify(favorites)
-                );
-
-                updateStats(products);
-
-                renderFavorites();
-
-                applyFilters();
-            });
-
-        favoritesList.appendChild(item);
-    });
-}
-
-
-/* EVENTS */
+/* ================= EVENTS ================= */
 
 let searchTimer;
 
-searchInput.addEventListener("input", () => {
+searchInput.addEventListener(
+    "input",
+    () => {
 
-    clearTimeout(searchTimer);
+        clearTimeout(searchTimer);
 
-    searchTimer = setTimeout(() => {
+        searchTimer =
+            setTimeout(() => {
 
-        if (searchInput.value.trim().length >= 2) {
-            searchProducts();
-        }
+                const query =
+                    searchInput.value.trim();
 
-    }, 500);
-});
+                if (query.length >= 2) {
+                    searchProducts(query);
+                } else {
+                    renderProducts();
+                }
 
+            }, 500);
 
-searchInput.addEventListener("keydown", event => {
-
-    if (event.key === "Enter") {
-        searchProducts();
     }
-});
-
-
-storeFilter.addEventListener(
-    "change",
-    applyFilters
 );
+
 
 sortSelect.addEventListener(
     "change",
-    applyFilters
+    renderProducts
 );
 
-priceRange.addEventListener("input", () => {
-    updatePriceDisplay();
-    applyFilters();
-});
+
+priceRange.addEventListener(
+    "input",
+    () => {
+        updatePriceDisplay();
+        renderProducts();
+    }
+);
 
 
-clearFilters.addEventListener("click", () => {
+clearFilters.addEventListener(
+    "click",
+    () => {
 
-    searchInput.value = "";
+        searchInput.value = "";
+        sortSelect.value = "cheap";
+        priceRange.value = 2000;
 
-    storeFilter.value = "all";
-    sortSelect.value = "cheap";
+        updatePriceDisplay();
+        renderProducts();
 
-    // Set price range to max for current currency
-    const maxUSD = 2000;
-    priceRange.value = Math.round(maxUSD * rates[currentCurrency]);
-
-    updatePriceDisplay();
-
-    products = [];
-
-    updateStats([]);
-
-    showMessage(t("empty"));
-});
+    }
+);
 
 
-languageSelect.addEventListener("change", () => {
+languageSelect.addEventListener(
+    "change",
+    () => {
 
-    currentLanguage =
-        languageSelect.value;
-
-    localStorage.setItem(
-        "pricecompareLanguage",
-        currentLanguage
-    );
-
-    updateLanguage();
-});
-
-
-currencySelect.addEventListener("change", () => {
-
-    currentCurrency =
-        currencySelect.value;
-
-    localStorage.setItem(
-        "pricecompareCurrency",
-        currentCurrency
-    );
-
-    updatePriceRangeMax();
-
-    updatePriceDisplay();
-
-    applyFilters();
-});
-
-
-themeBtn.addEventListener("click", () => {
-    themePanel.classList.toggle("show");
-});
-
-
-document.querySelectorAll(".theme-option").forEach(button => {
-
-    button.addEventListener("click", () => {
-
-        currentTheme =
-            button.dataset.theme;
-
-        document.body.dataset.theme =
-            currentTheme;
+        currentLanguage =
+            languageSelect.value;
 
         localStorage.setItem(
-            "pricecompareTheme",
-            currentTheme
+            "pricecompare_language",
+            currentLanguage
         );
 
-        themePanel.classList.remove("show");
+        updateLanguage();
+
+    }
+);
+
+
+currencySelect.addEventListener(
+    "change",
+    () => {
+
+        currentCurrency =
+            currencySelect.value;
+
+        localStorage.setItem(
+            "pricecompare_currency",
+            currentCurrency
+        );
+
+        updatePriceDisplay();
+        renderProducts();
+        renderFavorites();
+        renderComparison();
+
+    }
+);
+
+
+themeBtn.addEventListener(
+    "click",
+    () => {
+        themePanel.classList.toggle("show");
+    }
+);
+
+
+document
+    .querySelectorAll(".theme-option")
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                currentTheme =
+                    button.dataset.theme;
+
+                document.body.dataset.theme =
+                    currentTheme;
+
+                localStorage.setItem(
+                    "pricecompare_theme",
+                    currentTheme
+                );
+
+                themePanel.classList.remove("show");
+
+            }
+        );
+
     });
 
-});
+
+favoritesBtn.addEventListener(
+    "click",
+    () => {
+
+        renderFavorites();
+
+        favoritesModal.classList.add(
+            "show"
+        );
+
+    }
+);
 
 
-favoritesBtn.addEventListener("click", () => {
-
-    renderFavorites();
-
-    favoritesModal.classList.add("show");
-});
-
-
-closeModal.addEventListener("click", () => {
-    favoritesModal.classList.remove("show");
-});
-
-
-favoritesModal.addEventListener("click", event => {
-
-    if (event.target === favoritesModal) {
+closeModal.addEventListener(
+    "click",
+    () => {
         favoritesModal.classList.remove("show");
     }
+);
 
-});
+
+favoritesModal.addEventListener(
+    "click",
+    event => {
+
+        if (event.target === favoritesModal) {
+            favoritesModal.classList.remove("show");
+        }
+
+    }
+);
 
 
-/* START */
+compareNavBtn.addEventListener(
+    "click",
+    () => {
 
-document.body.dataset.theme = currentTheme;
+        productsSection.style.display = "none";
+        document.querySelector(".hero").style.display = "none";
+        document.querySelector(".filters").style.display = "none";
+        document.querySelector(".stats").style.display = "none";
 
-languageSelect.value = currentLanguage;
-currencySelect.value = currentCurrency;
+        compareSection.classList.add("show");
 
-updatePriceRangeMax();
+        renderComparison();
 
-updatePriceDisplay();
-updateLanguage();
-updateStats([]);
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
 
-searchInput.value = "iphone";
+    }
+);
 
-searchProducts();
+
+function showProductsPage() {
+
+    productsSection.style.display = "";
+    document.querySelector(".hero").style.display = "";
+    document.querySelector(".filters").style.display = "";
+    document.querySelector(".stats").style.display = "";
+
+    compareSection.classList.remove("show");
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+}
+
+
+compareBackBtn.addEventListener(
+    "click",
+    showProductsPage
+);
+
+
+compareGoProducts.addEventListener(
+    "click",
+    showProductsPage
+);
+
+
+clearComparison.addEventListener(
+    "click",
+    () => {
+
+        comparison = [];
+
+        saveComparison();
+        updateCounters();
+        renderProducts();
+        renderComparison();
+
+    }
+);
+
+
+/* ================= START ================= */
+
+function init() {
+
+    document.body.dataset.theme =
+        currentTheme;
+
+    languageSelect.value =
+        currentLanguage;
+
+    currencySelect.value =
+        currentCurrency;
+
+    updateCounters();
+    updatePriceDisplay();
+    updateLanguage();
+
+    searchProducts("phone");
+
+}
+
+
+init();
