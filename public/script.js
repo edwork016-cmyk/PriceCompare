@@ -728,6 +728,32 @@ async function searchProducts() {
 
 
         if (!response.ok || !data.success) {
+            const errorCode = data?.error || "API_ERROR";
+
+            if (errorCode === "API_QUOTA_EXCEEDED") {
+                throw Object.assign(
+                    new Error(
+                        data.message || "Product provider API quota has been exceeded. Please try again later."
+                    ),
+                    {
+                        code: "API_QUOTA_EXCEEDED",
+                        userMessage: "Mahsulotlarni yuklab bo‘lmadi. Ma’lumot manbasi limiti tugagan. Keyinroq qayta urinib ko‘ring."
+                    }
+                );
+            }
+
+            if (errorCode === "API_UNAVAILABLE") {
+                throw Object.assign(
+                    new Error(
+                        data.message || "Product data service is temporarily unavailable. Please try again later."
+                    ),
+                    {
+                        code: "API_UNAVAILABLE",
+                        userMessage: "Mahsulotlarni yuklab bo‘lmadi. Ma’lumot manbasi vaqtincha ishlamayapti. Keyinroq qayta urinib ko‘ring."
+                    }
+                );
+            }
+
             throw new Error(
                 data.message || "API error"
             );
@@ -779,11 +805,31 @@ async function searchProducts() {
 
         console.error(error);
 
+        const isQuota =
+            error?.code === "API_QUOTA_EXCEEDED";
+
+        const isUnavailable =
+            error?.code === "API_UNAVAILABLE" ||
+            error instanceof TypeError;
+
+        const message =
+            isQuota
+                ? "Mahsulotlarni yuklab bo‘lmadi. Ma’lumot manbasi limiti tugagan. Keyinroq qayta urinib ko‘ring."
+                : isUnavailable
+                    ? "Mahsulotlarni yuklab bo‘lmadi. Ma’lumot manbasi vaqtincha ishlamayapti. Keyinroq qayta urinib ko‘ring."
+                    : error?.userMessage ||
+                        "Ma'lumot olishda xatolik yuz berdi";
+
+        const detail =
+            isQuota || isUnavailable
+                ? ""
+                : `<small>${error.message}</small>`;
+
         productsContainer.innerHTML = `
             <div class="error-message">
                 <i class="fa-solid fa-circle-exclamation"></i>
-                <p>Ma'lumot olishda xatolik yuz berdi</p>
-                <small>${error.message}</small>
+                <p>${message}</p>
+                ${detail}
             </div>
         `;
 

@@ -80,12 +80,35 @@ async function parseApiFetch(url) {
             data
         );
 
-        throw new Error(
+        const rateLimitError =
+            response.status === 429 ||
+            response.status === 402 ||
+            data?.error?.error?.toLowerCase().includes("usage limit") ||
+            data?.error?.message?.toLowerCase().includes("usage limit") ||
+            data?.error?.error?.toLowerCase().includes("rate limit") ||
+            data?.error?.message?.toLowerCase().includes("rate limit") ||
+            data?.error?.error?.toLowerCase().includes("quota") ||
+            data?.error?.message?.toLowerCase().includes("quota") ||
+            data?.error?.error?.toLowerCase().includes("credit") ||
+            data?.error?.message?.toLowerCase().includes("credit") ||
+            data?.message?.toLowerCase().includes("usage limit") ||
+            data?.message?.toLowerCase().includes("rate limit") ||
+            data?.message?.toLowerCase().includes("quota") ||
+            data?.message?.toLowerCase().includes("credit");
+
+        const error = new Error(
             data.message ||
             data.detail ||
             data.error ||
             `Parse API xatosi: ${response.status}`
         );
+
+        if (rateLimitError) {
+            error.code = "API_QUOTA_EXCEEDED";
+            error.isQuotaError = true;
+        }
+
+        throw error;
     }
 
     return data;
@@ -702,18 +725,42 @@ app.get(
         );
 
 
-        const results =
-            await Promise.allSettled([
+        let results;
 
-                searchUzum(query),
+        try {
+            results =
+                await Promise.allSettled([
 
-                searchYandex(query)
+                    searchUzum(query),
 
-            ]);
+                    searchYandex(query)
+
+                ]);
+        } catch (error) {
+            const isQuota =
+                error?.code === "API_QUOTA_EXCEEDED" ||
+                error?.isQuotaError;
+
+            if (isQuota) {
+                return res.status(429).json({
+                    success: false,
+                    error: "API_QUOTA_EXCEEDED",
+                    message: "Product provider API quota has been exceeded. Please try again later."
+                });
+            }
+
+            return res.status(502).json({
+                success: false,
+                error: "API_UNAVAILABLE",
+                message: "Product provider is temporarily unavailable. Please try again later."
+            });
+        }
 
 
         let uzumProducts = [];
         let yandexProducts = [];
+        let quotaExceeded = false;
+        let apiUnavailable = false;
 
 
         // =================================================
@@ -733,6 +780,14 @@ app.get(
                 "❌ UZUM ERROR:",
                 results[0].reason?.message
             );
+
+            const reason = results[0].reason;
+
+            if (reason?.isQuotaError || reason?.code === "API_QUOTA_EXCEEDED") {
+                quotaExceeded = true;
+            } else if (reason instanceof Error) {
+                apiUnavailable = true;
+            }
 
         }
 
@@ -755,6 +810,14 @@ app.get(
                 results[1].reason?.message
             );
 
+            const reason = results[1].reason;
+
+            if (reason?.isQuotaError || reason?.code === "API_QUOTA_EXCEEDED") {
+                quotaExceeded = true;
+            } else if (reason instanceof Error) {
+                apiUnavailable = true;
+            }
+
         }
 
 
@@ -765,6 +828,21 @@ app.get(
             ...yandexProducts
 
         ];
+
+        if (
+            quotaExceeded ||
+            (!products.length && (apiUnavailable || results.some(result => result.status === "rejected")))
+        ) {
+            const shouldQuota = quotaExceeded || results.some(result => result.status === "rejected" && (result.reason?.isQuotaError || result.reason?.code === "API_QUOTA_EXCEEDED"));
+
+            return res.status(shouldQuota ? 429 : 503).json({
+                success: false,
+                error: shouldQuota ? "API_QUOTA_EXCEEDED" : "API_UNAVAILABLE",
+                message: shouldQuota
+                    ? "Product provider API quota has been exceeded. Please try again later."
+                    : "Product data service is temporarily unavailable. Please try again later."
+            });
+        }
 
 
         console.log(
