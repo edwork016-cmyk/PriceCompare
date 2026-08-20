@@ -1155,6 +1155,9 @@ function productCard(product) {
 
                     <a
                         href="${escapeHtml(getProductUrl(product))}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                         ${t("view")}
                     </a>

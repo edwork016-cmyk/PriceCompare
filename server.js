@@ -6,6 +6,11 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+console.log(
+    "PARSE_API_KEY:",
+    process.env.PARSE_API_KEY ? "FOUND" : "NOT FOUND"
+);
+
 // =====================================================
 // CONFIG
 // =====================================================
