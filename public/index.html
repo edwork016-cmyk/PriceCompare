@@ -1,30 +1,659 @@
 <!DOCTYPE html>
 <html lang="uz">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PriceCompare</title>
-</head>
 
-<body>
-
-    <h1>PriceCompare</h1>
-
-    <input
-        id="searchInput"
-        type="text"
-        placeholder="Mahsulot qidiring..."
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
     >
 
-    <button id="searchButton">
-        Qidirish
-    </button>
+    <meta
+        name="description"
+        content="PriceCompare — mahsulotlarni qidirish va narxlarni solishtirish xizmati."
+    >
 
-    <p id="status"></p>
+    <title>PriceCompare</title>
 
-    <div id="products"></div>
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
 
-    <script src="script.js"></script>
+    <!-- CSS -->
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+
+<body data-theme="light">
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header class="header">
+
+    <div class="container header-inner">
+
+        <a
+            href="/"
+            class="logo"
+        >
+            <i class="fa-solid fa-tags"></i>
+            <span>PriceCompare</span>
+        </a>
+
+
+        <div class="header-actions">
+
+            <!-- Language -->
+
+            <select
+                id="languageSelect"
+                aria-label="Language"
+            >
+
+                <option value="uz">
+                    O'zbekcha
+                </option>
+
+                <option value="ru">
+                    Русский
+                </option>
+
+                <option value="en">
+                    English
+                </option>
+
+            </select>
+
+
+            <!-- Currency -->
+
+            <select
+                id="currencySelect"
+                aria-label="Currency"
+            >
+
+                <option value="USD">
+                    USD $
+                </option>
+
+                <option value="UZS">
+                    UZS so'm
+                </option>
+
+                <option value="EUR">
+                    EUR €
+                </option>
+
+                <option value="JPY">
+                    JPY ¥
+                </option>
+
+                <option value="RUB">
+                    RUB ₽
+                </option>
+
+            </select>
+
+
+            <!-- Theme -->
+
+            <button
+                id="themeBtn"
+                class="icon-btn"
+                type="button"
+                title="Theme"
+            >
+
+                <i class="fa-solid fa-palette"></i>
+
+            </button>
+
+
+            <!-- Favorites -->
+
+            <button
+                id="favoritesBtn"
+                class="icon-btn"
+                type="button"
+                title="Favorites"
+            >
+
+                <i class="fa-solid fa-heart"></i>
+
+                <span id="favCount">
+                    0
+                </span>
+
+            </button>
+
+
+            <!-- Compare -->
+
+            <button
+                id="compareNavBtn"
+                class="icon-btn"
+                type="button"
+                title="Compare"
+            >
+
+                <i class="fa-solid fa-code-compare"></i>
+
+                <span id="compareCount">
+                    0
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- Theme panel -->
+
+    <div
+        id="themePanel"
+        class="theme-panel"
+    >
+
+        <button
+            class="theme-option"
+            data-theme="light"
+            type="button"
+        >
+            <i class="fa-solid fa-sun"></i>
+            Light
+        </button>
+
+
+        <button
+            class="theme-option"
+            data-theme="dark"
+            type="button"
+        >
+            <i class="fa-solid fa-moon"></i>
+            Dark
+        </button>
+
+
+        <button
+            class="theme-option"
+            data-theme="neon"
+            type="button"
+        >
+            <i class="fa-solid fa-bolt"></i>
+            Neon
+        </button>
+
+
+        <button
+            class="theme-option"
+            data-theme="black"
+            type="button"
+        >
+            <i class="fa-solid fa-circle"></i>
+            Black
+        </button>
+
+    </div>
+
+</header>
+
+
+
+<!-- =====================================================
+     HERO
+===================================================== -->
+
+<section class="hero">
+
+    <div class="container">
+
+        <h1 id="heroTitle">
+            Narxlarni bir necha soniyada solishtiring
+        </h1>
+
+
+        <p id="heroText">
+            Mahsulotlarni toping va narxlarni taqqoslang
+        </p>
+
+
+        <!-- SEARCH -->
+
+        <div class="search-box">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+
+            <input
+                id="search"
+                type="search"
+                autocomplete="off"
+                placeholder="Mahsulot qidirish..."
+            >
+
+
+            <button
+                id="searchButton"
+                type="button"
+            >
+                <i class="fa-solid fa-search"></i>
+                Qidirish
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     FILTERS
+===================================================== -->
+
+<section class="filters">
+
+    <div class="container filters-inner">
+
+
+        <!-- Sort -->
+
+        <select
+            id="sort"
+            aria-label="Sort"
+        >
+
+            <option value="cheap">
+                Avval arzonlari
+            </option>
+
+            <option value="expensive">
+                Avval qimmatlari
+            </option>
+
+            <option value="rating">
+                Reyting bo'yicha
+            </option>
+
+        </select>
+
+
+
+        <!-- Price -->
+
+        <div class="price-filter">
+
+            <label for="priceRange">
+                <span id="priceDisplay">
+                    ≤ $2,000.00
+                </span>
+            </label>
+
+
+            <input
+                id="priceRange"
+                type="range"
+                min="0"
+                max="2000"
+                value="2000"
+                step="1"
+            >
+
+        </div>
+
+
+
+        <!-- Clear -->
+
+        <button
+            id="clearFilters"
+            type="button"
+        >
+
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+
+            <span id="clearText">
+                Tozalash
+            </span>
+
+        </button>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     STATS
+===================================================== -->
+
+<section class="stats">
+
+    <div class="container stats-grid">
+
+
+        <div class="stat-card">
+
+            <i class="fa-solid fa-box"></i>
+
+            <div>
+
+                <strong id="count">
+                    0
+                </strong>
+
+                <span id="productsText">
+                    Mahsulot topildi
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <i class="fa-solid fa-store"></i>
+
+            <div>
+
+                <strong id="favTotal">
+                    0
+                </strong>
+
+                <span id="sourcesText">
+                    Manba
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <i class="fa-solid fa-chart-line"></i>
+
+            <div>
+
+                <strong id="avgPrice">
+                    Narx mavjud emas
+                </strong>
+
+                <span id="averageText">
+                    O'rtacha narx
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="stat-card">
+
+            <i class="fa-solid fa-heart"></i>
+
+            <div>
+
+                <strong id="favCount">
+                    0
+                </strong>
+
+                <span id="favoritesText">
+                    Sevimlilarda
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     PRODUCTS
+===================================================== -->
+
+<main
+    id="productsSection"
+    class="products-section"
+>
+
+    <div class="container">
+
+        <div
+            id="products"
+            class="products-grid"
+        >
+
+            <div class="empty-message">
+
+                <i class="fa-solid fa-box-open"></i>
+
+                <p>
+                    Mahsulot qidiring
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+
+
+<!-- =====================================================
+     COMPARISON
+===================================================== -->
+
+<section
+    id="compareSection"
+    class="compare-section"
+>
+
+    <div class="container">
+
+
+        <div class="compare-header">
+
+            <button
+                id="compareBackBtn"
+                type="button"
+            >
+
+                <i class="fa-solid fa-arrow-left"></i>
+
+                <span id="compareBackText">
+                    Mahsulotlarga
+                </span>
+
+            </button>
+
+
+            <div>
+
+                <h2 id="compareTitle">
+                    Mahsulotlarni taqqoslash
+                </h2>
+
+                <p id="compareSubtitle">
+                    4 tagacha mahsulot tanlab,
+                    xususiyatlarini solishtiring
+                </p>
+
+            </div>
+
+
+            <button
+                id="clearComparison"
+                type="button"
+            >
+
+                <i class="fa-solid fa-trash"></i>
+
+                <span id="clearCompareText">
+                    Tozalash
+                </span>
+
+            </button>
+
+        </div>
+
+
+
+        <!-- Empty comparison -->
+
+        <div
+            id="compareEmpty"
+            class="compare-empty"
+        >
+
+            <i class="fa-solid fa-code-compare"></i>
+
+
+            <h3 id="compareEmptyTitle">
+                Hali mahsulot tanlanmagan
+            </h3>
+
+
+            <p id="compareEmptyText">
+                Taqqoslash uchun kamida 2 ta
+                mahsulot qo'shing.
+            </p>
+
+
+            <button
+                id="compareGoProducts"
+                type="button"
+            >
+
+                <i class="fa-solid fa-box"></i>
+
+                <span id="compareGoProductsText">
+                    Mahsulotlarni ko'rish
+                </span>
+
+            </button>
+
+        </div>
+
+
+
+        <!-- Comparison table -->
+
+        <div
+            id="compareTableWrap"
+            class="compare-table-wrap"
+        >
+
+            <table
+                id="compareTable"
+            ></table>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     FAVORITES MODAL
+===================================================== -->
+
+<div
+    id="favoritesModal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+
+        <div class="modal-header">
+
+            <h2 id="favoritesTitle">
+                Sevimlilar
+            </h2>
+
+
+            <button
+                id="closeModal"
+                type="button"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="favoritesList"
+            class="favorites-list"
+        >
+
+            <div class="empty-message">
+
+                Hozircha sevimli mahsulotlar yo'q
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer class="footer">
+
+    <div class="container">
+
+        <p id="footerText">
+            Mahsulotlarni qidirish va narxlarni
+            taqqoslash xizmati.
+        </p>
+
+    </div>
+
+</footer>
+
+
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
+<script src="script.js"></script>
 
 </body>
+
 </html>
