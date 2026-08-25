@@ -1,22 +1,17 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-console.log(
-    "PARSE_API_KEY:",
-    process.env.PARSE_API_KEY ? "FOUND" : "NOT FOUND"
-);
 
 // =====================================================
 // CONFIG
 // =====================================================
 
 const PARSE_API_KEY = process.env.PARSE_API_KEY || "";
-
 const PARSE_API_URL = "https://api.parse.bot/scraper";
 
 const UZUM_SCRAPER_ID =
@@ -24,7 +19,6 @@ const UZUM_SCRAPER_ID =
 
 const YANDEX_SCRAPER_ID =
     "bf0d8525-2102-46d1-84e3-0fd50aed24c3";
-
 
 // =====================================================
 // MIDDLEWARE
@@ -34,78 +28,107 @@ app.use(cors());
 app.use(express.json());
 
 app.use(
-    express.static(
-        path.join(__dirname, "public")
-    )
+    express.static(path.join(__dirname, "public"))
 );
 
+// =====================================================
+// HELPERS
+// =====================================================
+
+function isQuotaError(status, data) {
+    const text = JSON.stringify(data || {}).toLowerCase();
+
+    return (
+        status === 402 ||
+        status === 429 ||
+        text.includes("usage limit") ||
+        text.includes("rate limit") ||
+        text.includes("quota") ||
+        text.includes("credit") ||
+        text.includes("credits") ||
+        text.includes("out of credits")
+    );
+}
 
 // =====================================================
-// PARSE API
+// PARSE API FETCH
 // =====================================================
 
 async function parseApiFetch(url) {
-
     if (!PARSE_API_KEY) {
-        throw new Error(
+        const error = new Error(
             "PARSE_API_KEY topilmadi. .env faylni tekshiring."
         );
+
+        error.code = "PARSE_NOT_CONFIGURED";
+
+        throw error;
     }
 
-    const response = await fetch(url, {
-        method: "GET",
+    let response;
 
-        headers: {
-            "X-API-Key": PARSE_API_KEY,
-            "Accept": "application/json"
-        }
-    });
+    try {
+        response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "X-API-Key": PARSE_API_KEY,
+                "Accept": "application/json"
+            }
+        });
+    } catch (networkError) {
+        console.error(
+            "PARSE API NETWORK ERROR:",
+            networkError.message
+        );
+
+        const error = new Error(
+            "Parse API bilan tarmoq ulanishida xatolik yuz berdi."
+        );
+
+        error.code = "API_UNAVAILABLE";
+
+        throw error;
+    }
 
     const text = await response.text();
 
-    let data;
+    let data = {};
 
     try {
-        data = JSON.parse(text);
+        data = text ? JSON.parse(text) : {};
     } catch {
-        throw new Error(
+        console.error(
+            `PARSE API JSON EMAS. HTTP ${response.status}`
+        );
+
+        const error = new Error(
             `Parse API JSON qaytarmadi. HTTP ${response.status}`
         );
+
+        error.code = "API_UNAVAILABLE";
+
+        throw error;
     }
 
     if (!response.ok) {
-
         console.error(
-            "PARSE API ERROR:",
+            `PARSE API ERROR HTTP ${response.status}:`,
             data
         );
 
-        const rateLimitError =
-            response.status === 429 ||
-            response.status === 402 ||
-            data?.error?.error?.toLowerCase().includes("usage limit") ||
-            data?.error?.message?.toLowerCase().includes("usage limit") ||
-            data?.error?.error?.toLowerCase().includes("rate limit") ||
-            data?.error?.message?.toLowerCase().includes("rate limit") ||
-            data?.error?.error?.toLowerCase().includes("quota") ||
-            data?.error?.message?.toLowerCase().includes("quota") ||
-            data?.error?.error?.toLowerCase().includes("credit") ||
-            data?.error?.message?.toLowerCase().includes("credit") ||
-            data?.message?.toLowerCase().includes("usage limit") ||
-            data?.message?.toLowerCase().includes("rate limit") ||
-            data?.message?.toLowerCase().includes("quota") ||
-            data?.message?.toLowerCase().includes("credit");
-
         const error = new Error(
-            data.message ||
-            data.detail ||
-            data.error ||
+            data?.message ||
+            data?.detail ||
+            data?.error?.message ||
+            data?.error ||
             `Parse API xatosi: ${response.status}`
         );
 
-        if (rateLimitError) {
+        if (isQuotaError(response.status, data)) {
             error.code = "API_QUOTA_EXCEEDED";
             error.isQuotaError = true;
+        } else {
+            error.code = "API_UNAVAILABLE";
         }
 
         throw error;
@@ -114,59 +137,51 @@ async function parseApiFetch(url) {
     return data;
 }
 
-
 // =====================================================
-// UNIVERSAL ARRAY EXTRACTOR
+// UNIVERSAL PRODUCT ARRAY EXTRACTOR
 // =====================================================
 
 function extractProducts(data) {
-
     const possibleArrays = [
-
+        data,
         data?.items,
-
         data?.products,
 
+        data?.data,
         data?.data?.items,
-
         data?.data?.products,
 
+        data?.payload,
         data?.payload?.items,
-
         data?.payload?.products,
 
+        data?.payload?.data,
         data?.payload?.data?.items,
-
         data?.payload?.data?.products,
 
+        data?.makeSearch?.products,
+        data?.data?.makeSearch?.products,
+        data?.payload?.makeSearch?.products,
         data?.payload?.data?.makeSearch?.products,
 
-        data?.payload?.makeSearch?.products,
-
-        data?.data?.makeSearch?.products,
-
-        data?.data?.payload
-
+        data?.results,
+        data?.data?.results
     ];
 
     for (const value of possibleArrays) {
-
         if (Array.isArray(value)) {
             return value;
         }
-
     }
 
     return [];
 }
-
 
 // =====================================================
 // PRICE NORMALIZER
 // =====================================================
 
 function normalizePrice(value) {
-
     if (
         value === null ||
         value === undefined ||
@@ -176,773 +191,1073 @@ function normalizePrice(value) {
     }
 
     if (typeof value === "object") {
-
         value =
             value.value ??
             value.amount ??
             value.price ??
+            value.currentPrice ??
+            value.current ??
             0;
-
     }
 
-    let price =
-        Number(
-            String(value)
-                .replace(/[^\d.,]/g, "")
-                .replace(",", ".")
-        );
+    let cleaned = String(value)
+        .replace(/\s/g, "")
+        .replace(/[^\d.,]/g, "");
+
+    if (!cleaned) {
+        return 0;
+    }
+
+    // 1.234.567 format
+    if (
+        cleaned.includes(".") &&
+        cleaned.includes(",")
+    ) {
+        const lastDot = cleaned.lastIndexOf(".");
+        const lastComma = cleaned.lastIndexOf(",");
+
+        if (lastComma > lastDot) {
+            cleaned = cleaned
+                .replace(/\./g, "")
+                .replace(",", ".");
+        } else {
+            cleaned = cleaned.replace(/,/g, "");
+        }
+    } else {
+        // 2,099,000 yoki 2.099.000
+        const separators =
+            cleaned.match(/[.,]/g) || [];
+
+        if (separators.length > 1) {
+            cleaned = cleaned.replace(/[.,]/g, "");
+        } else {
+            cleaned = cleaned.replace(",", ".");
+        }
+    }
+
+    let price = Number(cleaned);
 
     if (!Number.isFinite(price)) {
         return 0;
     }
 
-    /*
-        Uzum ayrim response'larda narxni tiyin
-        ko'rinishida qaytarishi mumkin.
-
-        Faqat juda katta qiymatlarni tiyin
-        deb hisoblaymiz.
-    */
-
+    // Ayrim API lar qiymatni tiyin/centda qaytarishi mumkin
     if (price >= 100000000) {
-        price =
-            Math.round(price / 100);
+        price = price / 100;
     }
 
     return Math.round(price);
 }
 
-
 // =====================================================
 // IMAGE NORMALIZER
 // =====================================================
 
-function normalizeImage(item) {
+function getImageUrl(value) {
+    if (!value) {
+        return "";
+    }
 
-    const photos = [
-        ...(Array.isArray(item.photos)
+    if (typeof value === "string") {
+        return value.trim();
+    }
+
+    if (typeof value === "object") {
+        return (
+            value.url ||
+            value.src ||
+            value.original ||
+            value.large ||
+            value.medium ||
+            value.small ||
+            value.link ||
+            ""
+        );
+    }
+
+    return "";
+}
+
+function normalizeImage(item) {
+    const candidates = [
+        item?.image,
+        item?.imageUrl,
+        item?.image_url,
+        item?.photo,
+        item?.photoUrl,
+        item?.photo_url,
+        item?.picture,
+        item?.thumbnail,
+        item?.thumbnailUrl,
+        item?.thumbnail_url,
+        item?.mainImage,
+        item?.main_image,
+
+        ...(Array.isArray(item?.images)
+            ? item.images
+            : []),
+
+        ...(Array.isArray(item?.photos)
             ? item.photos
             : []),
 
-        ...(Array.isArray(item.photoLinks)
+        ...(Array.isArray(item?.photoLinks)
             ? item.photoLinks
             : []),
 
-        ...(Array.isArray(item.photo_links)
+        ...(Array.isArray(item?.photo_links)
             ? item.photo_links
             : [])
     ];
 
-    return (
-        item.image ||
-        item.imageUrl ||
-        item.image_url ||
-        item.photo ||
-        item.photoUrl ||
-        item.photo_link ||
-        item.picture ||
-        photos[0] ||
-        ""
-    );
-}
+    for (const candidate of candidates) {
+        const imageUrl = getImageUrl(candidate);
 
-
-function isValidProductUrl(value) {
-
-    if (!value || typeof value !== "string") {
-        return false;
+        if (imageUrl) {
+            return imageUrl;
+        }
     }
 
-    const cleaned = value.trim();
+    return "";
+}
 
-    if (!cleaned) return false;
-    if (cleaned === "#") return false;
-    if (cleaned === "null") return false;
-    if (cleaned === "undefined") return false;
-    if (cleaned.startsWith("javascript:")) return false;
+// =====================================================
+// URL NORMALIZER
+// =====================================================
+
+function normalizeUrl(value) {
+    if (!value) {
+        return null;
+    }
+
+    if (typeof value === "object") {
+        const objectCandidates = [
+            value.url,
+            value.href,
+            value.link,
+            value.src,
+            value.productUrl,
+            value.product_url,
+            value.webUrl,
+            value.web_url,
+            value.itemWebUrl,
+            value.offerUrl
+        ];
+
+        for (const candidate of objectCandidates) {
+            const result = normalizeUrl(candidate);
+
+            if (result) {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    if (typeof value !== "string") {
+        return null;
+    }
+
+    let url = value.trim();
+
+    if (!url) {
+        return null;
+    }
+
+    if (
+        url === "#" ||
+        url === "null" ||
+        url === "undefined" ||
+        url.toLowerCase().startsWith("javascript:") ||
+        url.toLowerCase().startsWith("data:")
+    ) {
+        return null;
+    }
+
+    // Relative URL
+    if (url.startsWith("//")) {
+        url = `https:${url}`;
+    }
 
     try {
+        const parsed = new URL(url);
 
-        const parsed = new URL(cleaned);
+        if (
+            parsed.protocol !== "http:" &&
+            parsed.protocol !== "https:"
+        ) {
+            return null;
+        }
+
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
+
+// =====================================================
+// MARKETPLACE HOST CHECK
+// =====================================================
+
+function isUzumUrl(url) {
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
 
         return (
-            parsed.protocol === "http:" ||
-            parsed.protocol === "https:"
+            host === "uzum.uz" ||
+            host.endsWith(".uzum.uz")
         );
-
     } catch {
         return false;
     }
-
 }
 
+function isYandexMarketUrl(url) {
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
+
+        return (
+            host === "market.yandex.uz" ||
+            host.endsWith(".market.yandex.uz")
+        );
+    } catch {
+        return false;
+    }
+}
+
+// =====================================================
+// SEARCH PAGE CHECK
+// =====================================================
+
+function isSearchOrHomeUrl(url) {
+    try {
+        const parsed = new URL(url);
+
+        const pathname =
+            parsed.pathname
+                .toLowerCase()
+                .replace(/\/+$/, "");
+
+        if (
+            pathname === "" ||
+            pathname === "/"
+        ) {
+            return true;
+        }
+
+        if (
+            pathname.includes("/search") ||
+            pathname.includes("/catalog/search")
+        ) {
+            return true;
+        }
+
+        return false;
+    } catch {
+        return true;
+    }
+}
+
+// =====================================================
+// GENERATE CANDIDATES FROM ITEM
+// =====================================================
+
+function getAllUrlCandidates(item) {
+    if (!item || typeof item !== "object") {
+        return [];
+    }
+
+    const candidates = [
+        // Direct product URLs
+        item.productUrl,
+        item.product_url,
+        item.productURL,
+
+        item.itemWebUrl,
+        item.item_web_url,
+
+        item.webUrl,
+        item.web_url,
+
+        item.offerUrl,
+        item.offer_url,
+
+        item.itemUrl,
+        item.item_url,
+
+        item.detailUrl,
+        item.detail_url,
+
+        item.pageUrl,
+        item.page_url,
+
+        item.canonicalUrl,
+        item.canonical_url,
+
+        item.href,
+        item.link,
+        item.url,
+
+        // Nested product
+        item.product?.productUrl,
+        item.product?.product_url,
+        item.product?.url,
+        item.product?.link,
+        item.product?.href,
+        item.product?.webUrl,
+        item.product?.web_url,
+
+        // Nested offer
+        item.offer?.productUrl,
+        item.offer?.product_url,
+        item.offer?.url,
+        item.offer?.link,
+        item.offer?.href,
+        item.offer?.webUrl,
+
+        // Nested data
+        item.data?.productUrl,
+        item.data?.product_url,
+        item.data?.url,
+        item.data?.link,
+        item.data?.href,
+        item.data?.webUrl,
+
+        // Nested item
+        item.item?.productUrl,
+        item.item?.product_url,
+        item.item?.url,
+        item.item?.link,
+        item.item?.href
+    ];
+
+    // Dublikatlarni olib tashlaymiz
+    return [
+        ...new Set(
+            candidates.filter(
+                (value) => value !== null &&
+                    value !== undefined &&
+                    value !== ""
+            )
+        )
+    ];
+}
+
+// =====================================================
+// FIND DIRECT PRODUCT URL
+// =====================================================
+
+function findDirectProductUrl(item, marketplace) {
+    const candidates =
+        getAllUrlCandidates(item);
+
+    for (const candidate of candidates) {
+        const url = normalizeUrl(candidate);
+
+        if (!url) {
+            continue;
+        }
+
+        let correctMarketplace = false;
+
+        if (marketplace === "uzum") {
+            correctMarketplace =
+                isUzumUrl(url);
+        }
+
+        if (marketplace === "yandex") {
+            correctMarketplace =
+                isYandexMarketUrl(url);
+        }
+
+        if (
+            correctMarketplace &&
+            !isSearchOrHomeUrl(url)
+        ) {
+            return url;
+        }
+    }
+
+    return null;
+}
+
+// =====================================================
+// MARKETPLACE SEARCH URL
+// =====================================================
 
 function getMarketplaceSearchUrl(storeName, productName) {
-
     const name =
-        String(
-            productName || ""
-        ).trim();
+        String(productName || "").trim();
 
-    const query =
-        encodeURIComponent(name || "product");
+    const query = encodeURIComponent(
+        name || "product"
+    );
 
-    const normalizedStore =
-        String(storeName || "")
-            .toLowerCase();
+    const store = String(
+        storeName || ""
+    ).toLowerCase();
 
-    if (normalizedStore.includes("uzum")) {
+    if (store.includes("uzum")) {
         return `https://uzum.uz/ru/search?query=${query}`;
     }
 
-    if (normalizedStore.includes("yandex")) {
+    if (store.includes("yandex")) {
         return `https://market.yandex.uz/search?text=${query}`;
     }
 
     return `https://www.google.com/search?q=${query}`;
-
 }
 
+// =====================================================
+// PRODUCT NAME NORMALIZER
+// =====================================================
+
+function getProductName(item) {
+    return (
+        item?.title ||
+        item?.name ||
+        item?.productName ||
+        item?.product_name ||
+        item?.displayName ||
+        item?.display_name ||
+        "Noma'lum mahsulot"
+    );
+}
 
 // =====================================================
-// UZUM MARKET
+// NUMBER NORMALIZER
+// =====================================================
+
+function normalizeNumber(value) {
+    const number = Number(value);
+
+    return Number.isFinite(number)
+        ? number
+        : 0;
+}
+
+// =====================================================
+// UZUM SEARCH
 // =====================================================
 
 async function searchUzum(query) {
-
     const url = new URL(
         `${PARSE_API_URL}/${UZUM_SCRAPER_ID}/search_products`
     );
 
-    url.searchParams.set(
-        "query",
-        query
-    );
-
-    url.searchParams.set(
-        "limit",
-        "24"
-    );
-
-    url.searchParams.set(
-        "offset",
-        "0"
-    );
-
+    url.searchParams.set("query", query);
+    url.searchParams.set("limit", "24");
+    url.searchParams.set("offset", "0");
 
     const data =
-        await parseApiFetch(
-            url.toString()
-        );
-
+        await parseApiFetch(url.toString());
 
     const items =
         extractProducts(data);
 
-
     console.log(
-        `Uzum: ${items.length} ta mahsulot`
+        `🟢 Uzum topildi: ${items.length}`
     );
 
-
-    return items.map(
-        (item, index) => {
-
+    return items
+        .slice(0, 24)
+        .map((item, index) => {
             const productId =
-                item.productId ||
-                item.product_id ||
-                item.id ||
+                item?.productId ||
+                item?.product_id ||
+                item?.skuId ||
+                item?.sku_id ||
+                item?.id ||
                 index;
 
+            const name =
+                getProductName(item);
 
-            const productName =
-                item.title ||
-                item.name ||
-                item.productName ||
-                "Noma'lum mahsulot";
-
+            // AYNAN UZUM MAHSULOT LINKI
             const directProductUrl =
-                isValidProductUrl(
-                    item.url ||
-                    item.link ||
-                    item.productUrl ||
-                    item.product_url
-                )
-                    ? (
-                        item.url ||
-                        item.link ||
-                        item.productUrl ||
-                        item.product_url
-                    )
-                    : null;
+                findDirectProductUrl(
+                    item,
+                    "uzum"
+                );
+
+            const finalUrl =
+                directProductUrl ||
+                getMarketplaceSearchUrl(
+                    "uzum",
+                    name
+                );
+
+            if (directProductUrl) {
+                console.log(
+                    `🔗 UZUM DIRECT: ${name}`
+                );
+            } else {
+                console.log(
+                    `⚠️ UZUM SEARCH FALLBACK: ${name}`
+                );
+            }
 
             return {
+                id: `uzum-${productId}`,
 
-                id:
-                    `uzum-${productId}`,
+                name,
 
-                name:
-                    productName,
-
-                price:
-                    normalizePrice(
-                        item.minSellPrice ??
-                        item.min_sell_price ??
-                        item.sellPrice ??
-                        item.price
-                    ),
+                price: normalizePrice(
+                    item?.minSellPrice ??
+                    item?.min_sell_price ??
+                    item?.sellPrice ??
+                    item?.salePrice ??
+                    item?.sale_price ??
+                    item?.currentPrice ??
+                    item?.price
+                ),
 
                 currency:
+                    item?.currency ||
                     "UZS",
 
-                rating:
-                    Number(
-                        item.rating ||
-                        item.ratingValue ||
-                        0
-                    ),
+                rating: normalizeNumber(
+                    item?.rating ??
+                    item?.ratingValue ??
+                    item?.rating_value ??
+                    item?.averageRating ??
+                    0
+                ),
 
                 image:
                     normalizeImage(item),
 
                 brand:
-                    item.brand ||
-                    item.brandName ||
-                    item.seller?.title ||
+                    item?.brand ||
+                    item?.brandName ||
+                    item?.brand_name ||
+                    item?.seller?.title ||
+                    item?.sellerName ||
                     "Uzum Market",
 
                 category:
-                    item.category?.title ||
-                    item.category ||
+                    item?.category?.title ||
+                    item?.category?.name ||
+                    item?.category ||
                     "Marketplace",
 
                 stock:
-                    item.availableAmount ??
-                    item.available_amount ??
-                    item.stock ??
+                    item?.availableAmount ??
+                    item?.available_amount ??
+                    item?.stock ??
+                    item?.availability ??
+                    item?.availabilityStatus ??
                     "Mavjud",
 
-                store:
-                    "Uzum Market",
+                store: "Uzum Market",
 
-                url:
-                    directProductUrl ||
-                    getMarketplaceSearchUrl(
-                        "Uzum Market",
-                        productName
-                    ),
+                // FRONTEND AVVAL SHU URLNI OCHADI
+                url: finalUrl,
+
+                // Faqat aniq product page
+                productUrl:
+                    directProductUrl,
+
+                barcode:
+                    item?.barcode ||
+                    item?.barCode ||
+                    "",
+
+                source: "uzum"
+            };
+        });
+}
+
+// =====================================================
+// YANDEX SEARCH
+// =====================================================
+
+async function searchYandex(query) {
+    const url = new URL(
+        `${PARSE_API_URL}/${YANDEX_SCRAPER_ID}/search_products`
+    );
+
+    url.searchParams.set("query", query);
+    url.searchParams.set("page", "1");
+    url.searchParams.set("sort", "dpop");
+
+    const data =
+        await parseApiFetch(url.toString());
+
+    const items =
+        extractProducts(data);
+
+    console.log(
+        `🔵 Yandex topildi: ${items.length}`
+    );
+
+    return items
+        .slice(0, 24)
+        .map((item, index) => {
+            const productId =
+                item?.ware_id ||
+                item?.wareId ||
+                item?.product_id ||
+                item?.productId ||
+                item?.sku_id ||
+                item?.skuId ||
+                item?.offer_id ||
+                item?.offerId ||
+                item?.id ||
+                index;
+
+            const name =
+                getProductName(item);
+
+            // =============================================
+            // ENG MUHIM QISM
+            // BARCHA MUMKIN BO'LGAN URL LAR TEKSHIRILADI
+            // VA FAQAT market.yandex.uz MAHSULOT URL TANLANADI
+            // =============================================
+
+            const directProductUrl =
+                findDirectProductUrl(
+                    item,
+                    "yandex"
+                );
+
+            const finalUrl =
+                directProductUrl ||
+                getMarketplaceSearchUrl(
+                    "yandex",
+                    name
+                );
+
+            if (directProductUrl) {
+                console.log(
+                    `🔗 YANDEX DIRECT: ${name}`
+                );
+                console.log(
+                    `   ${directProductUrl}`
+                );
+            } else {
+                console.log(
+                    `⚠️ YANDEX SEARCH FALLBACK: ${name}`
+                );
+            }
+
+            return {
+                id: `yandex-${productId}`,
+
+                name,
+
+                price: normalizePrice(
+                    item?.price ??
+                    item?.salePrice ??
+                    item?.sale_price ??
+                    item?.currentPrice ??
+                    item?.current_price ??
+                    item?.minPrice ??
+                    item?.min_price ??
+                    item?.priceValue
+                ),
+
+                currency:
+                    item?.currency ||
+                    "UZS",
+
+                rating: normalizeNumber(
+                    item?.rating ??
+                    item?.ratingValue ??
+                    item?.rating_value ??
+                    item?.averageRating ??
+                    0
+                ),
+
+                image:
+                    normalizeImage(item),
+
+                brand:
+                    item?.vendor ||
+                    item?.vendor_name ||
+                    item?.brand ||
+                    item?.brandName ||
+                    item?.brand_name ||
+                    "Yandex Market",
+
+                category:
+                    item?.category?.name ||
+                    item?.category_name ||
+                    item?.category ||
+                    "Marketplace",
+
+                stock:
+(
+    item?.delivery_text ||
+    item?.deliveryText ||
+    item?.availabilityStatus ||
+    item?.availability
+) ??
+                    "Mavjud",
+
+                store: "Yandex Market UZ",
+
+                // AYNAN MAHSULOT URL TOPILSA:
+                // productUrl = direct link
+                // url = direct link
+                //
+                // TOPILMASA:
+                // url = qidiruv sahifasi
+
+                url: finalUrl,
 
                 productUrl:
                     directProductUrl,
 
                 barcode:
-                    item.barcode ||
-                    item.barCode ||
+                    item?.barcode ||
+                    item?.barCode ||
                     "",
 
-                source:
-                    "uzum"
+                oldPrice: normalizePrice(
+                    item?.old_price ??
+                    item?.oldPrice ??
+                    item?.old_price_value ??
+                    0
+                ),
 
+                discount: normalizeNumber(
+                    item?.discount_percent ??
+                    item?.discountPercent ??
+                    item?.discount ??
+                    0
+                ),
+
+                source: "yandex"
             };
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// YANDEX MARKET
-// =====================================================
-
-async function searchYandex(query) {
-
-    const url = new URL(
-        `${PARSE_API_URL}/${YANDEX_SCRAPER_ID}/search_products`
-    );
-
-
-    url.searchParams.set(
-        "query",
-        query
-    );
-
-    url.searchParams.set(
-        "page",
-        "1"
-    );
-
-    url.searchParams.set(
-        "sort",
-        "dpop"
-    );
-
-
-    const data =
-        await parseApiFetch(
-            url.toString()
-        );
-
-
-    const items =
-        extractProducts(data);
-
-
-    console.log(
-        `Yandex Market: ${items.length} ta mahsulot`
-    );
-
-
-    return items
-        .slice(0, 24)
-        .map(
-            (item, index) => {
-
-                const productId =
-                    item.ware_id ||
-                    item.wareId ||
-                    item.product_id ||
-                    item.productId ||
-                    item.sku_id ||
-                    item.skuId ||
-                    item.id ||
-                    index;
-
-
-                const title =
-                    item.title ||
-                    item.name ||
-                    item.productName ||
-                    "Noma'lum mahsulot";
-
-
-                const directUrl =
-                    isValidProductUrl(
-                        item.url ||
-                        item.product_url ||
-                        item.productUrl ||
-                        item.itemWebUrl
-                    )
-                        ? (
-                            item.url ||
-                            item.product_url ||
-                            item.productUrl ||
-                            item.itemWebUrl
-                        )
-                        : null;
-
-
-                return {
-
-                    id:
-                        `yandex-${productId}`,
-
-                    name:
-                        title,
-
-                    price:
-                        normalizePrice(
-                            item.price ??
-                            item.minPrice ??
-                            item.salePrice
-                        ),
-
-                    currency:
-                        item.currency ||
-                        "UZS",
-
-                    rating:
-                        Number(
-                            item.rating ||
-                            item.ratingValue ||
-                            0
-                        ),
-
-                    image:
-                        normalizeImage(item),
-
-                    brand:
-                        item.vendor ||
-                        item.vendor_name ||
-                        item.brand ||
-                        "Yandex Market",
-
-                    category:
-                        item.category ||
-                        item.category_name ||
-                        "Marketplace",
-
-                    stock:
-                        item.delivery_text ||
-                        item.deliveryText ||
-                        item.availabilityStatus ||
-                        "Mavjud",
-
-                    store:
-                        "Yandex Market UZ",
-
-                    url:
-                        directUrl ||
-                        getMarketplaceSearchUrl(
-                            "Yandex Market",
-                            title
-                        ),
-
-                    productUrl:
-                        directUrl,
-
-                    barcode:
-                        item.barcode ||
-                        "",
-
-                    oldPrice:
-                        normalizePrice(
-                            item.old_price ??
-                            item.oldPrice
-                        ),
-
-                    discount:
-                        Number(
-                            item.discount_percent ||
-                            item.discountPercent ||
-                            0
-                        ),
-
-                    source:
-                        "yandex"
-
-                };
-
-            }
-        );
-
-}
-
-
-// =====================================================
-// STATUS
-// =====================================================
-
-app.get(
-    "/api/status",
-    (req, res) => {
-
-        res.json({
-
-            success:
-                true,
-
-            status:
-                "online",
-
-            message:
-                "PriceCompare API ishlayapti",
-
-            sources: {
-
-                uzum: {
-
-                    configured:
-                        Boolean(
-                            PARSE_API_KEY
-                        ),
-
-                    scraperId:
-                        UZUM_SCRAPER_ID
-
-                },
-
-                yandexMarket: {
-
-                    configured:
-                        Boolean(
-                            PARSE_API_KEY
-                        ),
-
-                    scraperId:
-                        YANDEX_SCRAPER_ID,
-
-                    marketplace:
-                        "market.yandex.uz"
-
-                }
-
-            }
-
         });
-
-    }
-);
-
+}
 
 // =====================================================
-// SEARCH
+// API STATUS
 // =====================================================
 
-app.get(
-    "/api/search",
-    async (req, res) => {
+app.get("/api/status", (req, res) => {
+    res.json({
+        success: true,
+        status: "online",
 
-        const query =
-            String(
-                req.query.q || ""
-            ).trim();
+        message:
+            "PriceCompare API ishlayapti",
 
+        parseApi: {
+            configured:
+                Boolean(PARSE_API_KEY),
 
-        if (!query) {
+            mode:
+                PARSE_API_KEY
+                    ? "enabled"
+                    : "fallback"
+        },
 
-            return res.status(400).json({
+        sources: {
+            uzum: {
+                enabled: true,
 
-                success:
-                    false,
+                configured:
+                    Boolean(PARSE_API_KEY),
 
-                message:
-                    "Qidiruv so'rovini kiriting"
+                scraperId:
+                    UZUM_SCRAPER_ID,
 
-            });
-
-        }
-
-
-        if (!PARSE_API_KEY) {
-
-            return res.status(500).json({
-
-                success:
-                    false,
-
-                message:
-                    "PARSE_API_KEY topilmadi. .env faylni tekshiring."
-
-            });
-
-        }
-
-
-        console.log("");
-        console.log(
-            `🔎 Qidiruv: ${query}`
-        );
-
-
-        let results;
-
-        try {
-            results =
-                await Promise.allSettled([
-
-                    searchUzum(query),
-
-                    searchYandex(query)
-
-                ]);
-        } catch (error) {
-            const isQuota =
-                error?.code === "API_QUOTA_EXCEEDED" ||
-                error?.isQuotaError;
-
-            if (isQuota) {
-                return res.status(429).json({
-                    success: false,
-                    error: "API_QUOTA_EXCEEDED",
-                    message: "Product provider API quota has been exceeded. Please try again later."
-                });
-            }
-
-            return res.status(502).json({
-                success: false,
-                error: "API_UNAVAILABLE",
-                message: "Product provider is temporarily unavailable. Please try again later."
-            });
-        }
-
-
-        let uzumProducts = [];
-        let yandexProducts = [];
-        let quotaExceeded = false;
-        let apiUnavailable = false;
-
-
-        // =================================================
-        // UZUM RESULT
-        // =================================================
-
-        if (
-            results[0].status === "fulfilled"
-        ) {
-
-            uzumProducts =
-                results[0].value;
-
-        } else {
-
-            console.error(
-                "❌ UZUM ERROR:",
-                results[0].reason?.message
-            );
-
-            const reason = results[0].reason;
-
-            if (reason?.isQuotaError || reason?.code === "API_QUOTA_EXCEEDED") {
-                quotaExceeded = true;
-            } else if (reason instanceof Error) {
-                apiUnavailable = true;
-            }
-
-        }
-
-
-        // =================================================
-        // YANDEX RESULT
-        // =================================================
-
-        if (
-            results[1].status === "fulfilled"
-        ) {
-
-            yandexProducts =
-                results[1].value;
-
-        } else {
-
-            console.error(
-                "❌ YANDEX ERROR:",
-                results[1].reason?.message
-            );
-
-            const reason = results[1].reason;
-
-            if (reason?.isQuotaError || reason?.code === "API_QUOTA_EXCEEDED") {
-                quotaExceeded = true;
-            } else if (reason instanceof Error) {
-                apiUnavailable = true;
-            }
-
-        }
-
-
-        const products = [
-
-            ...uzumProducts,
-
-            ...yandexProducts
-
-        ];
-
-        if (
-            quotaExceeded ||
-            (!products.length && (apiUnavailable || results.some(result => result.status === "rejected")))
-        ) {
-            const shouldQuota = quotaExceeded || results.some(result => result.status === "rejected" && (result.reason?.isQuotaError || result.reason?.code === "API_QUOTA_EXCEEDED"));
-
-            return res.status(shouldQuota ? 429 : 503).json({
-                success: false,
-                error: shouldQuota ? "API_QUOTA_EXCEEDED" : "API_UNAVAILABLE",
-                message: shouldQuota
-                    ? "Product provider API quota has been exceeded. Please try again later."
-                    : "Product data service is temporarily unavailable. Please try again later."
-            });
-        }
-
-
-        console.log(
-            `✅ Jami: ${products.length}`
-        );
-
-
-        res.json({
-
-            success:
-                true,
-
-            query,
-
-            count:
-                products.length,
-
-            sources: {
-
-                uzum:
-                    uzumProducts.length,
-
-                yandexMarket:
-                    yandexProducts.length
-
+                marketplace:
+                    "uzum.uz"
             },
 
-            products
+            yandexMarket: {
+                enabled: true,
 
+                configured:
+                    Boolean(PARSE_API_KEY),
+
+                scraperId:
+                    YANDEX_SCRAPER_ID,
+
+                marketplace:
+                    "market.yandex.uz"
+            }
+        }
+    });
+});
+
+// =====================================================
+// SEARCH API
+// =====================================================
+
+app.get("/api/search", async (req, res) => {
+    const query = String(
+        req.query.q || ""
+    ).trim();
+
+    // =================================================
+    // EMPTY QUERY
+    // =================================================
+
+    if (!query) {
+        return res.json({
+            success: true,
+            query: "",
+            count: 0,
+
+            sources: {
+                uzum: 0,
+                yandexMarket: 0
+            },
+
+            products: [],
+
+            message:
+                "Qidiruv so'rovini kiriting."
         });
-
     }
-);
 
+    console.log("");
+    console.log(
+        "================================================"
+    );
+    console.log(`🔎 QIDIRUV: ${query}`);
+    console.log(
+        "================================================"
+    );
+
+    // =================================================
+    // API KEY CHECK
+    // =================================================
+
+    if (!PARSE_API_KEY) {
+        console.log(
+            "⚠️ PARSE_API_KEY TOPILMADI"
+        );
+
+        return res.json({
+            success: true,
+            query,
+            count: 0,
+
+            sources: {
+                uzum: 0,
+                yandexMarket: 0
+            },
+
+            products: [],
+
+            message:
+                "PARSE_API_KEY topilmadi. .env faylni tekshiring."
+        });
+    }
+
+    // =================================================
+    // UZUM + YANDEX PARALLEL SEARCH
+    // =================================================
+
+    const results =
+        await Promise.allSettled([
+            searchUzum(query),
+            searchYandex(query)
+        ]);
+
+    let uzumProducts = [];
+    let yandexProducts = [];
+
+    let uzumError = null;
+    let yandexError = null;
+
+    // =================================================
+    // UZUM RESULT
+    // =================================================
+
+    if (results[0].status === "fulfilled") {
+        uzumProducts =
+            Array.isArray(results[0].value)
+                ? results[0].value
+                : [];
+    } else {
+        uzumError =
+            results[0].reason?.message ||
+            String(results[0].reason);
+
+        console.error(
+            "❌ UZUM ERROR:",
+            uzumError
+        );
+    }
+
+    // =================================================
+    // YANDEX RESULT
+    // =================================================
+
+    if (results[1].status === "fulfilled") {
+        yandexProducts =
+            Array.isArray(results[1].value)
+                ? results[1].value
+                : [];
+    } else {
+        yandexError =
+            results[1].reason?.message ||
+            String(results[1].reason);
+
+        console.error(
+            "❌ YANDEX ERROR:",
+            yandexError
+        );
+    }
+
+    // =================================================
+    // COMBINE
+    // =================================================
+
+    const products = [
+        ...uzumProducts,
+        ...yandexProducts
+    ];
+
+    const uzumDirectLinks =
+        uzumProducts.filter(
+            (product) => Boolean(product.productUrl)
+        ).length;
+
+    const yandexDirectLinks =
+        yandexProducts.filter(
+            (product) => Boolean(product.productUrl)
+        ).length;
+
+    console.log("");
+    console.log(
+        `🟢 Uzum: ${uzumProducts.length} mahsulot`
+    );
+    console.log(
+        `🔗 Uzum direct links: ${uzumDirectLinks}`
+    );
+
+    console.log(
+        `🔵 Yandex: ${yandexProducts.length} mahsulot`
+    );
+    console.log(
+        `🔗 Yandex direct links: ${yandexDirectLinks}`
+    );
+
+    console.log(
+        `📦 JAMI: ${products.length} mahsulot`
+    );
+
+    console.log(
+        "================================================"
+    );
+    console.log("");
+
+    // =================================================
+    // RESPONSE
+    // =================================================
+
+    return res.json({
+        success: true,
+
+        query,
+
+        count:
+            products.length,
+
+        sources: {
+            uzum:
+                uzumProducts.length,
+
+            yandexMarket:
+                yandexProducts.length
+        },
+
+        directLinks: {
+            uzum:
+                uzumDirectLinks,
+
+            yandexMarket:
+                yandexDirectLinks
+        },
+
+        errors: {
+            uzum:
+                uzumError,
+
+            yandexMarket:
+                yandexError
+        },
+
+        products,
+
+        message:
+            products.length === 0
+                ? "Mahsulot topilmadi yoki manbalar vaqtincha mavjud emas."
+                : undefined
+    });
+});
 
 // =====================================================
 // HOME
 // =====================================================
 
-app.get(
-    "/",
-    (req, res) => {
+app.get("/", (req, res) => {
+    res.sendFile(
+        path.join(
+            __dirname,
+            "public",
+            "index.html"
+        )
+    );
+});
 
-        res.sendFile(
-            path.join(
-                __dirname,
-                "public",
-                "index.html"
-            )
+// =====================================================
+// API 404
+// =====================================================
+
+app.use("/api", (req, res) => {
+    res.status(404).json({
+        success: false,
+        message:
+            "API endpoint topilmadi."
+    });
+});
+
+// =====================================================
+// SERVER START
+// =====================================================
+
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log("");
+        console.log(
+            "================================================"
         );
 
-    }
-);
+        console.log(
+            `🚀 PriceCompare ishlayapti: http://localhost:${PORT}`
+        );
 
+        console.log(
+            "🟢 Source 1: Uzum Market"
+        );
 
-// =====================================================
-// START
-// =====================================================
+        console.log(
+            "🔵 Source 2: Yandex Market Uzbekistan"
+        );
 
-if (
-    require.main === module
-) {
+        console.log(
+            PARSE_API_KEY
+                ? "🔑 Parse API: CONFIGURED"
+                : "⚠️ Parse API: NOT CONFIGURED - .env faylni tekshiring"
+        );
 
-    app.listen(
-        PORT,
-        () => {
-
-            console.log("");
-            console.log(
-                "=========================================="
-            );
-
-            console.log(
-                `🚀 PriceCompare: http://localhost:${PORT}`
-            );
-
-            console.log(
-                "🛒 Source 1: Uzum Market"
-            );
-
-            console.log(
-                "🛒 Source 2: Yandex Market Uzbekistan"
-            );
-
-            console.log(
-                PARSE_API_KEY
-                    ? "🔑 Parse API: CONFIGURED"
-                    : "❌ Parse API: NOT CONFIGURED"
-            );
-
-            console.log(
-                "=========================================="
-            );
-
-            console.log("");
-
-        }
-    );
-
+        console.log(
+            "================================================"
+        );
+        console.log("");
+    });
 }
-
 
 module.exports = app;

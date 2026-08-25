@@ -74,34 +74,24 @@
             </select>
 
 
-            <!-- Currency -->
-
-            <select
-                id="currencySelect"
-                aria-label="Currency"
+            <div
+                id="mainCurrencyControl"
+                class="main-page-control"
+                hidden
             >
 
-                <option value="USD">
-                    USD $
-                </option>
+                <select
+                    id="mainCurrencySelect"
+                    aria-label="Currency"
+                >
+                    <option value="UZS">UZS so'm</option>
+                    <option value="USD">USD $</option>
+                    <option value="EUR">EUR €</option>
+                    <option value="RUB">RUB ₽</option>
+                    <option value="JPY">JPY ¥</option>
+                </select>
 
-                <option value="UZS">
-                    UZS so'm
-                </option>
-
-                <option value="EUR">
-                    EUR €
-                </option>
-
-                <option value="JPY">
-                    JPY ¥
-                </option>
-
-                <option value="RUB">
-                    RUB ₽
-                </option>
-
-            </select>
+            </div>
 
 
             <!-- Theme -->
@@ -114,6 +104,50 @@
             >
 
                 <i class="fa-solid fa-palette"></i>
+
+            </button>
+
+
+            <!-- NEW: Main-page theme widget (all 10 themes) —
+                 hidden by default, revealed via Settings ->
+                 "Show Themes on Main Page" -->
+
+            <div
+                id="mainThemeControl"
+                class="main-page-control"
+                hidden
+            >
+
+                <button
+                    id="mainThemeBtn"
+                    class="icon-btn"
+                    type="button"
+                    title="Theme"
+                >
+
+                    <i class="fa-solid fa-swatchbook"></i>
+
+                </button>
+
+
+                <div
+                    id="mainThemeDropdown"
+                    class="main-theme-dropdown"
+                ></div>
+
+            </div>
+
+
+            <!-- Settings -->
+
+            <button
+                id="settingsBtn"
+                class="icon-btn"
+                type="button"
+                title="Settings"
+            >
+
+                <i class="fa-solid fa-gear"></i>
 
             </button>
 
@@ -158,7 +192,7 @@
     </div>
 
 
-    <!-- Theme panel -->
+    <!-- Theme panel (quick Light/Dark control, unchanged) -->
 
     <div
         id="themePanel"
@@ -202,6 +236,16 @@
         >
             <i class="fa-solid fa-circle"></i>
             Black
+        </button>
+
+
+        <button
+            id="openAllThemesBtn"
+            class="theme-option theme-option-all"
+            type="button"
+        >
+            <i class="fa-solid fa-swatchbook"></i>
+            <span id="allThemesText">10 Themes</span>
         </button>
 
     </div>
@@ -629,6 +673,144 @@
                 Hozircha sevimli mahsulotlar yo'q
 
             </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     SETTINGS MODAL
+===================================================== -->
+
+<div
+    id="settingsModal"
+    class="modal"
+>
+
+    <div class="modal-content settings-modal-content">
+
+
+        <div class="modal-header">
+
+            <h2 id="settingsTitle">
+                Sozlamalar
+            </h2>
+
+
+            <button
+                id="closeSettingsModal"
+                type="button"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <div class="settings-body">
+
+
+            <!-- Language section -->
+
+            <section class="settings-section">
+
+                <h3>
+                    <i class="fa-solid fa-coins"></i>
+                    <span id="settingsCurrencyLabel">Valyuta</span>
+                </h3>
+
+                <div
+                    id="settingsCurrencyOptions"
+                    class="settings-option-grid"
+                ></div>
+
+            </section>
+
+
+            <section class="settings-section">
+
+                <h3>
+                    <i class="fa-solid fa-language"></i>
+                    <span id="settingsLanguageLabel">Til</span>
+                </h3>
+
+                <div
+                    id="settingsLanguageOptions"
+                    class="settings-option-grid"
+                ></div>
+
+            </section>
+
+
+            <!-- Themes section -->
+
+            <section class="settings-section">
+
+                <h3>
+                    <i class="fa-solid fa-palette"></i>
+                    <span id="settingsThemeLabel">Mavzular</span>
+                </h3>
+
+                <div
+                    id="settingsThemeOptions"
+                    class="settings-theme-grid"
+                ></div>
+
+            </section>
+
+
+            <!-- NEW: Main-page control toggles -->
+
+            <section class="settings-section">
+
+                <h3>
+                    <i class="fa-solid fa-sliders"></i>
+                    <span id="settingsMainControlsLabel">Bosh sahifa boshqaruvi</span>
+                </h3>
+
+                <div class="settings-toggle-list">
+
+                    <button
+                        type="button"
+                        id="toggleThemeWidget"
+                        class="settings-toggle"
+                    >
+                        <span id="toggleThemeWidgetText">
+                            Bosh sahifada mavzularni ko'rsatish
+                        </span>
+
+                        <span class="toggle-switch">
+                            <span class="toggle-knob"></span>
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="toggleHomepageCurrency"
+                        class="settings-toggle"
+                    >
+                        <span id="toggleHomepageCurrencyText">
+                            Bosh sahifada valyuta boshqaruvini ko'rsatish
+                        </span>
+
+                        <span class="toggle-switch">
+                            <span class="toggle-knob"></span>
+                        </span>
+
+                    </button>
+
+
+                </div>
+
+            </section>
 
         </div>
 
