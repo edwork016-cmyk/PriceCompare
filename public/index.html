@@ -4,10 +4,7 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <meta
         name="description"
@@ -16,102 +13,60 @@
 
     <title>PriceCompare</title>
 
-    <!-- Font Awesome -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
 
-    <!-- CSS -->
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+    <link rel="stylesheet" href="style.css">
 </head>
 
-
 <body data-theme="light">
-
-
-<!-- =====================================================
-     HEADER
-===================================================== -->
 
 <header class="header">
 
     <div class="container header-inner">
 
-        <a
-            href="/"
-            class="logo"
-        >
+        <a href="/" class="logo">
             <i class="fa-solid fa-tags"></i>
             <span>PriceCompare</span>
         </a>
 
-
         <div class="header-actions">
 
-            <!-- Language -->
-
-            <select
-                id="languageSelect"
-                aria-label="Language"
-            >
-
-                <option value="uz">
-                    O'zbekcha
-                </option>
-
-                <option value="ru">
-                    Русский
-                </option>
-
-                <option value="en">
-                    English
-                </option>
-
+            <!-- LANGUAGE -->
+            <select id="languageSelect">
+                <option value="uz">O'zbekcha</option>
+                <option value="ru">Русский</option>
+                <option value="en">English</option>
             </select>
 
-
+            <!-- MAIN CURRENCY -->
             <div
                 id="mainCurrencyControl"
                 class="main-page-control"
                 hidden
             >
-
-                <select
-                    id="mainCurrencySelect"
-                    aria-label="Currency"
-                >
+                <select id="mainCurrencySelect">
                     <option value="UZS">UZS so'm</option>
                     <option value="USD">USD $</option>
                     <option value="EUR">EUR €</option>
                     <option value="RUB">RUB ₽</option>
                     <option value="JPY">JPY ¥</option>
                 </select>
-
             </div>
 
-
-            <!-- Theme -->
-
+            <!-- QUICK THEME -->
             <button
                 id="themeBtn"
                 class="icon-btn"
                 type="button"
                 title="Theme"
             >
-
                 <i class="fa-solid fa-palette"></i>
-
             </button>
 
-
-            <!-- NEW: Main-page theme widget (all 10 themes) —
-                 hidden by default, revealed via Settings ->
-                 "Show Themes on Main Page" -->
-
+            <!-- MAIN THEME -->
             <div
                 id="mainThemeControl"
                 class="main-page-control"
@@ -122,13 +77,9 @@
                     id="mainThemeBtn"
                     class="icon-btn"
                     type="button"
-                    title="Theme"
                 >
-
                     <i class="fa-solid fa-swatchbook"></i>
-
                 </button>
-
 
                 <div
                     id="mainThemeDropdown"
@@ -137,67 +88,41 @@
 
             </div>
 
-
-            <!-- Settings -->
-
+            <!-- SETTINGS -->
             <button
                 id="settingsBtn"
                 class="icon-btn"
                 type="button"
-                title="Settings"
             >
-
                 <i class="fa-solid fa-gear"></i>
-
             </button>
 
-
-            <!-- Favorites -->
-
+            <!-- FAVORITES -->
             <button
                 id="favoritesBtn"
                 class="icon-btn"
                 type="button"
-                title="Favorites"
             >
-
                 <i class="fa-solid fa-heart"></i>
-
-                <span id="favCount">
-                    0
-                </span>
-
+                <span id="headerFavCount">0</span>
             </button>
 
-
-            <!-- Compare -->
-
+            <!-- COMPARE -->
             <button
                 id="compareNavBtn"
                 class="icon-btn"
                 type="button"
-                title="Compare"
             >
-
                 <i class="fa-solid fa-code-compare"></i>
-
-                <span id="compareCount">
-                    0
-                </span>
-
+                <span id="compareCount">0</span>
             </button>
 
         </div>
 
     </div>
 
-
-    <!-- Theme panel (quick Light/Dark control, unchanged) -->
-
-    <div
-        id="themePanel"
-        class="theme-panel"
-    >
+    <!-- QUICK THEME PANEL -->
+    <div id="themePanel" class="theme-panel">
 
         <button
             class="theme-option"
@@ -205,9 +130,8 @@
             type="button"
         >
             <i class="fa-solid fa-sun"></i>
-            Light
+            <span data-theme-text="light">Light</span>
         </button>
-
 
         <button
             class="theme-option"
@@ -215,29 +139,8 @@
             type="button"
         >
             <i class="fa-solid fa-moon"></i>
-            Dark
+            <span data-theme-text="dark">Dark</span>
         </button>
-
-
-        <button
-            class="theme-option"
-            data-theme="neon"
-            type="button"
-        >
-            <i class="fa-solid fa-bolt"></i>
-            Neon
-        </button>
-
-
-        <button
-            class="theme-option"
-            data-theme="black"
-            type="button"
-        >
-            <i class="fa-solid fa-circle"></i>
-            Black
-        </button>
-
 
         <button
             id="openAllThemesBtn"
@@ -253,10 +156,7 @@
 </header>
 
 
-
-<!-- =====================================================
-     HERO
-===================================================== -->
+<!-- HERO -->
 
 <section class="hero">
 
@@ -266,18 +166,13 @@
             Narxlarni bir necha soniyada solishtiring
         </h1>
 
-
         <p id="heroText">
             Mahsulotlarni toping va narxlarni taqqoslang
         </p>
 
-
-        <!-- SEARCH -->
-
         <div class="search-box">
 
             <i class="fa-solid fa-magnifying-glass"></i>
-
 
             <input
                 id="search"
@@ -286,13 +181,12 @@
                 placeholder="Mahsulot qidirish..."
             >
 
-
             <button
                 id="searchButton"
                 type="button"
             >
                 <i class="fa-solid fa-search"></i>
-                Qidirish
+                <span id="searchButtonText">Qidirish</span>
             </button>
 
         </div>
@@ -302,22 +196,13 @@
 </section>
 
 
-
-<!-- =====================================================
-     FILTERS
-===================================================== -->
+<!-- FILTERS -->
 
 <section class="filters">
 
     <div class="container filters-inner">
 
-
-        <!-- Sort -->
-
-        <select
-            id="sort"
-            aria-label="Sort"
-        >
+        <select id="sort">
 
             <option value="cheap">
                 Avval arzonlari
@@ -334,9 +219,6 @@
         </select>
 
 
-
-        <!-- Price -->
-
         <div class="price-filter">
 
             <div class="price-input-wrap">
@@ -348,39 +230,29 @@
                     class="price-input"
                     type="text"
                     inputmode="numeric"
-                    aria-label="Price limit"
-                    value="2 000 so'm"
+                    value="2 000 000"
                 >
 
             </div>
-
 
             <input
                 id="priceRange"
                 type="range"
                 min="0"
-                max="2000000"
-                value="2000000"
-                step="1"
+                max="20000000"
+                value="20000000"
+                step="1000"
             >
 
         </div>
 
 
-
-        <!-- Clear -->
-
         <button
             id="clearFilters"
             type="button"
         >
-
             <i class="fa-solid fa-filter-circle-xmark"></i>
-
-            <span id="clearText">
-                Tozalash
-            </span>
-
+            <span id="clearText">Tozalash</span>
         </button>
 
     </div>
@@ -388,34 +260,22 @@
 </section>
 
 
-
-<!-- =====================================================
-     STATS
-===================================================== -->
+<!-- STATS -->
 
 <section class="stats">
 
     <div class="container stats-grid">
-
 
         <div class="stat-card">
 
             <i class="fa-solid fa-box"></i>
 
             <div>
-
-                <strong id="count">
-                    0
-                </strong>
-
-                <span id="productsText">
-                    Mahsulot topildi
-                </span>
-
+                <strong id="count">0</strong>
+                <span id="productsText">Mahsulot topildi</span>
             </div>
 
         </div>
-
 
 
         <div class="stat-card">
@@ -423,19 +283,11 @@
             <i class="fa-solid fa-store"></i>
 
             <div>
-
-                <strong id="favTotal">
-                    0
-                </strong>
-
-                <span id="sourcesText">
-                    Manba
-                </span>
-
+                <strong id="sourceCount">0</strong>
+                <span id="sourcesText">Manba</span>
             </div>
 
         </div>
-
 
 
         <div class="stat-card">
@@ -443,19 +295,11 @@
             <i class="fa-solid fa-chart-line"></i>
 
             <div>
-
-                <strong id="avgPrice">
-                    Narx mavjud emas
-                </strong>
-
-                <span id="averageText">
-                    O'rtacha narx
-                </span>
-
+                <strong id="avgPrice">—</strong>
+                <span id="averageText">O'rtacha narx</span>
             </div>
 
         </div>
-
 
 
         <div class="stat-card">
@@ -463,15 +307,8 @@
             <i class="fa-solid fa-heart"></i>
 
             <div>
-
-                <strong id="favCount">
-                    0
-                </strong>
-
-                <span id="favoritesText">
-                    Sevimlilarda
-                </span>
-
+                <strong id="statsFavCount">0</strong>
+                <span id="favoritesText">Sevimlilarda</span>
             </div>
 
         </div>
@@ -481,28 +318,19 @@
 </section>
 
 
+<!-- PRODUCTS -->
 
-<!-- =====================================================
-     PRODUCTS
-===================================================== -->
-
-<main
-    id="productsSection"
-    class="products-section"
->
+<main id="productsSection" class="products-section">
 
     <div class="container">
 
-        <div
-            id="products"
-            class="products-grid"
-        >
+        <div id="products" class="products-grid">
 
             <div class="empty-message">
 
                 <i class="fa-solid fa-box-open"></i>
 
-                <p>
+                <p id="initialMessage">
                     Mahsulot qidiring
                 </p>
 
@@ -515,25 +343,15 @@
 </main>
 
 
+<!-- COMPARE -->
 
-<!-- =====================================================
-     COMPARISON
-===================================================== -->
-
-<section
-    id="compareSection"
-    class="compare-section"
->
+<section id="compareSection" class="compare-section">
 
     <div class="container">
 
-
         <div class="compare-header">
 
-            <button
-                id="compareBackBtn"
-                type="button"
-            >
+            <button id="compareBackBtn" type="button">
 
                 <i class="fa-solid fa-arrow-left"></i>
 
@@ -558,10 +376,7 @@
             </div>
 
 
-            <button
-                id="clearComparison"
-                type="button"
-            >
+            <button id="clearComparison" type="button">
 
                 <i class="fa-solid fa-trash"></i>
 
@@ -574,32 +389,19 @@
         </div>
 
 
-
-        <!-- Empty comparison -->
-
-        <div
-            id="compareEmpty"
-            class="compare-empty"
-        >
+        <div id="compareEmpty" class="compare-empty">
 
             <i class="fa-solid fa-code-compare"></i>
-
 
             <h3 id="compareEmptyTitle">
                 Hali mahsulot tanlanmagan
             </h3>
 
-
             <p id="compareEmptyText">
-                Taqqoslash uchun kamida 2 ta
-                mahsulot qo'shing.
+                Taqqoslash uchun kamida 2 ta mahsulot qo'shing.
             </p>
 
-
-            <button
-                id="compareGoProducts"
-                type="button"
-            >
+            <button id="compareGoProducts" type="button">
 
                 <i class="fa-solid fa-box"></i>
 
@@ -612,18 +414,12 @@
         </div>
 
 
-
-        <!-- Comparison table -->
-
         <div
             id="compareTableWrap"
             class="compare-table-wrap"
+            style="display:none"
         >
-
-            <table
-                id="compareTable"
-            ></table>
-
+            <table id="compareTable"></table>
         </div>
 
     </div>
@@ -631,18 +427,11 @@
 </section>
 
 
+<!-- FAVORITES -->
 
-<!-- =====================================================
-     FAVORITES MODAL
-===================================================== -->
-
-<div
-    id="favoritesModal"
-    class="modal"
->
+<div id="favoritesModal" class="modal">
 
     <div class="modal-content">
-
 
         <div class="modal-header">
 
@@ -650,11 +439,7 @@
                 Sevimlilar
             </h2>
 
-
-            <button
-                id="closeModal"
-                type="button"
-            >
+            <button id="closeModal" type="button">
 
                 <i class="fa-solid fa-xmark"></i>
 
@@ -662,37 +447,18 @@
 
         </div>
 
-
-        <div
-            id="favoritesList"
-            class="favorites-list"
-        >
-
-            <div class="empty-message">
-
-                Hozircha sevimli mahsulotlar yo'q
-
-            </div>
-
-        </div>
+        <div id="favoritesList" class="favorites-list"></div>
 
     </div>
 
 </div>
 
 
+<!-- SETTINGS -->
 
-<!-- =====================================================
-     SETTINGS MODAL
-===================================================== -->
-
-<div
-    id="settingsModal"
-    class="modal"
->
+<div id="settingsModal" class="modal">
 
     <div class="modal-content settings-modal-content">
-
 
         <div class="modal-header">
 
@@ -700,11 +466,7 @@
                 Sozlamalar
             </h2>
 
-
-            <button
-                id="closeSettingsModal"
-                type="button"
-            >
+            <button id="closeSettingsModal" type="button">
 
                 <i class="fa-solid fa-xmark"></i>
 
@@ -715,29 +477,18 @@
 
         <div class="settings-body">
 
-
-            <!-- Language section -->
-
-            <section class="settings-section">
-
-                <h3>
-                    <i class="fa-solid fa-coins"></i>
-                    <span id="settingsCurrencyLabel">Valyuta</span>
-                </h3>
-
-                <div
-                    id="settingsCurrencyOptions"
-                    class="settings-option-grid"
-                ></div>
-
-            </section>
-
+            <!-- LANGUAGE -->
 
             <section class="settings-section">
 
                 <h3>
+
                     <i class="fa-solid fa-language"></i>
-                    <span id="settingsLanguageLabel">Til</span>
+
+                    <span id="settingsLanguageLabel">
+                        Til
+                    </span>
+
                 </h3>
 
                 <div
@@ -748,13 +499,40 @@
             </section>
 
 
-            <!-- Themes section -->
+            <!-- CURRENCY -->
 
             <section class="settings-section">
 
                 <h3>
+
+                    <i class="fa-solid fa-coins"></i>
+
+                    <span id="settingsCurrencyLabel">
+                        Valyuta
+                    </span>
+
+                </h3>
+
+                <div
+                    id="settingsCurrencyOptions"
+                    class="settings-option-grid"
+                ></div>
+
+            </section>
+
+
+            <!-- THEMES -->
+
+            <section class="settings-section">
+
+                <h3>
+
                     <i class="fa-solid fa-palette"></i>
-                    <span id="settingsThemeLabel">Mavzular</span>
+
+                    <span id="settingsThemeLabel">
+                        Mavzular
+                    </span>
+
                 </h3>
 
                 <div
@@ -765,14 +543,20 @@
             </section>
 
 
-            <!-- NEW: Main-page control toggles -->
+            <!-- CONTROLS -->
 
             <section class="settings-section">
 
                 <h3>
+
                     <i class="fa-solid fa-sliders"></i>
-                    <span id="settingsMainControlsLabel">Bosh sahifa boshqaruvi</span>
+
+                    <span id="settingsMainControlsLabel">
+                        Bosh sahifa boshqaruvi
+                    </span>
+
                 </h3>
+
 
                 <div class="settings-toggle-list">
 
@@ -781,6 +565,7 @@
                         id="toggleThemeWidget"
                         class="settings-toggle"
                     >
+
                         <span id="toggleThemeWidgetText">
                             Bosh sahifada mavzularni ko'rsatish
                         </span>
@@ -797,8 +582,9 @@
                         id="toggleHomepageCurrency"
                         class="settings-toggle"
                     >
+
                         <span id="toggleHomepageCurrencyText">
-                            Bosh sahifada valyuta boshqaruvini ko'rsatish
+                            Bosh sahifada valyutani ko'rsatish
                         </span>
 
                         <span class="toggle-switch">
@@ -806,7 +592,6 @@
                         </span>
 
                     </button>
-
 
                 </div>
 
@@ -819,18 +604,12 @@
 </div>
 
 
-
-<!-- =====================================================
-     FOOTER
-===================================================== -->
-
 <footer class="footer">
 
     <div class="container">
 
         <p id="footerText">
-            Mahsulotlarni qidirish va narxlarni
-            taqqoslash xizmati.
+            Mahsulotlarni qidirish va narxlarni taqqoslash xizmati.
         </p>
 
     </div>
@@ -838,13 +617,7 @@
 </footer>
 
 
-
-<!-- =====================================================
-     JAVASCRIPT
-===================================================== -->
-
 <script src="script.js"></script>
 
 </body>
-
 </html>
