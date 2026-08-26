@@ -1,12 +1,20 @@
 {
   "name": "pricecompare",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "PriceCompare marketplace comparison app",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node --check server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "pricecompare",
+    "comparison",
+    "marketplace",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",

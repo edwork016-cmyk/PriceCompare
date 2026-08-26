@@ -1,1266 +1,1094 @@
-"use strict";
+// ======================================================
+// PRICECOMPARE FRONTEND
+// Uzum Market + Yandex Market
+// ======================================================
 
-/* =========================================================
-   PRICECOMPARE
-   Complete frontend controller
-========================================================= */
+const COMPARE_STORAGE_KEY = "pricecompare_comparison";
 
+const state = {
+    products: [],
+    filteredProducts: [],
+    favorites: JSON.parse(
+        localStorage.getItem("pricecompare_favorites") || "[]"
+    ),
+    comparison: (() => {
+        try {
+            const raw = JSON.parse(
+                localStorage.getItem(COMPARE_STORAGE_KEY) || "[]"
+            );
 
-/* =========================================================
-   STORAGE
-========================================================= */
-
-const STORAGE = {
-    language: "pricecompare_language",
-    currency: "pricecompare_currency",
-    theme: "pricecompare_theme",
-    favorites: "pricecompare_favorites",
-    comparison: "pricecompare_comparison",
-    showThemes: "pricecompare_show_themes",
-    showCurrency: "pricecompare_show_currency"
+            return Array.isArray(raw)
+                ? raw.filter(Boolean)
+                : [];
+        } catch {
+            return [];
+        }
+    })(),
+    language:
+        localStorage.getItem("pricecompare_language") || "uz",
+    currency:
+        localStorage.getItem("pricecompare_currency") || "UZS",
+    theme:
+        localStorage.getItem("pricecompare_theme") || "light"
 };
 
 
-/* =========================================================
-   THEMES
-========================================================= */
-
-const THEMES = [
-    {
-        id: "light",
-        name: {
-            uz: "Yorug'",
-            ru: "Светлая",
-            en: "Light"
-        },
-        colors: ["#f4f7fb", "#ffffff", "#2563eb"]
-    },
-    {
-        id: "dark",
-        name: {
-            uz: "Qorong'i",
-            ru: "Тёмная",
-            en: "Dark"
-        },
-        colors: ["#0f172a", "#172033", "#3b82f6"]
-    },
-    {
-        id: "neon",
-        name: {
-            uz: "Neon",
-            ru: "Неон",
-            en: "Neon"
-        },
-        colors: ["#080b18", "#11162a", "#a855f7"]
-    },
-    {
-        id: "black",
-        name: {
-            uz: "Qora",
-            ru: "Чёрная",
-            en: "Black"
-        },
-        colors: ["#000000", "#0d0d0d", "#ffffff"]
-    },
-    {
-        id: "blue",
-        name: {
-            uz: "Ko'k",
-            ru: "Синяя",
-            en: "Blue"
-        },
-        colors: ["#0b1220", "#101a2e", "#3b82f6"]
-    },
-    {
-        id: "purple",
-        name: {
-            uz: "Binafsha",
-            ru: "Фиолетовая",
-            en: "Purple"
-        },
-        colors: ["#140f22", "#1c1533", "#9333ea"]
-    },
-    {
-        id: "cyber",
-        name: {
-            uz: "Cyber",
-            ru: "Кибер",
-            en: "Cyber"
-        },
-        colors: ["#05070a", "#0b1015", "#00e6a8"]
-    },
-    {
-        id: "aurora",
-        name: {
-            uz: "Aurora",
-            ru: "Аврора",
-            en: "Aurora"
-        },
-        colors: ["#061019", "#0c1c2b", "#22d3ee"]
-    },
-    {
-        id: "galaxy",
-        name: {
-            uz: "Galaxy",
-            ru: "Галактика",
-            en: "Galaxy"
-        },
-        colors: ["#0a0714", "#150f28", "#ec4899"]
-    },
-    {
-        id: "matrix",
-        name: {
-            uz: "Matrix",
-            ru: "Матрица",
-            en: "Matrix"
-        },
-        colors: ["#000200", "#030b03", "#22ff66"]
-    }
-];
-
-
-/* =========================================================
-   TRANSLATIONS
-========================================================= */
+// ======================================================
+// ELEMENTS
+// ======================================================
 
-const translations = {
+const searchInput =
+    document.getElementById("search");
 
-    uz: {
-        heroTitle: "Narxlarni bir necha soniyada solishtiring",
-        heroText: "Mahsulotlarni toping va narxlarni taqqoslang",
-        searchPlaceholder: "Mahsulot qidirish...",
-        search: "Qidirish",
+const searchButton =
+    document.getElementById("searchButton");
 
-        cheap: "Avval arzonlari",
-        expensive: "Avval qimmatlari",
-        rating: "Reyting bo'yicha",
+const productsContainer =
+    document.getElementById("products");
 
-        clear: "Tozalash",
+const sortSelect =
+    document.getElementById("sort");
 
-        products: "Mahsulot topildi",
-        sources: "Manba",
-        average: "O'rtacha narx",
-        favorites: "Sevimlilarda",
+const priceRange =
+    document.getElementById("priceRange");
 
-        loading: "Mahsulotlar yuklanmoqda...",
-        noProducts: "Mahsulot topilmadi",
-        searchProduct: "Mahsulot qidiring",
-        error: "Xatolik yuz berdi",
+const priceInput =
+    document.getElementById("priceInput");
 
-        favorite: "Sevimli",
-        compare: "Taqqoslash",
-        added: "Qo'shildi",
-        open: "Ochish",
+const priceDisplay =
+    document.getElementById("priceDisplay");
 
-        priceUnavailable: "Narx mavjud emas",
+const clearFilters =
+    document.getElementById("clearFilters");
 
-        favoritesTitle: "Sevimlilar",
-        emptyFavorites: "Hozircha sevimli mahsulotlar yo'q",
-        remove: "O'chirish",
+const languageSelect =
+    document.getElementById("languageSelect");
 
-        compareTitle: "Mahsulotlarni taqqoslash",
-        compareSubtitle:
-            "4 tagacha mahsulot tanlab, xususiyatlarini solishtiring",
+const currencySelect =
+    document.getElementById("currencySelect");
 
-        back: "Mahsulotlarga",
-        clearCompare: "Tozalash",
+const themeBtn =
+    document.getElementById("themeBtn");
 
-        emptyCompareTitle: "Hali mahsulot tanlanmagan",
-        emptyCompareText:
-            "Taqqoslash uchun kamida 2 ta mahsulot qo'shing.",
-        showProducts: "Mahsulotlarni ko'rish",
+const themePanel =
+    document.getElementById("themePanel");
 
-        name: "Nomi",
-        brand: "Brend",
-        price: "Narx",
-        ratingLabel: "Reyting",
-        stock: "Mavjudligi",
-        store: "Do'kon",
+const favoritesBtn =
+    document.getElementById("favoritesBtn");
 
-        settings: "Sozlamalar",
-        language: "Til",
-        currency: "Valyuta",
-        themes: "Mavzular",
+const favoritesModal =
+    document.getElementById("favoritesModal");
 
-        mainControls: "Bosh sahifa boshqaruvi",
+const closeModal =
+    document.getElementById("closeModal");
 
-        showThemes:
-            "Bosh sahifada mavzularni ko'rsatish",
+const favoritesList =
+    document.getElementById("favoritesList");
 
-        showCurrency:
-            "Bosh sahifada valyutani ko'rsatish",
+const compareNavBtn =
+    document.getElementById("compareNavBtn");
 
-        tenThemes: "10 ta tema",
+const compareSection =
+    document.getElementById("compareSection");
 
-        light: "Yorug'",
-        dark: "Qorong'i",
+const compareBackBtn =
+    document.getElementById("compareBackBtn");
 
-        footer:
-            "Mahsulotlarni qidirish va narxlarni taqqoslash xizmati."
-    },
+const clearComparison =
+    document.getElementById("clearComparison");
 
+const compareTable =
+    document.getElementById("compareTable");
 
-    ru: {
-        heroTitle: "Сравнивайте цены за несколько секунд",
-        heroText: "Находите товары и сравнивайте цены",
-        searchPlaceholder: "Поиск товара...",
-        search: "Поиск",
+const compareEmpty =
+    document.getElementById("compareEmpty");
 
-        cheap: "Сначала дешёвые",
-        expensive: "Сначала дорогие",
-        rating: "По рейтингу",
+const compareTableWrap =
+    document.getElementById("compareTableWrap");
 
-        clear: "Очистить",
+const compareGoProducts =
+    document.getElementById("compareGoProducts");
 
-        products: "Найдено товаров",
-        sources: "Источники",
-        average: "Средняя цена",
-        favorites: "В избранном",
 
-        loading: "Загрузка товаров...",
-        noProducts: "Товары не найдены",
-        searchProduct: "Найдите товар",
-        error: "Произошла ошибка",
-
-        favorite: "В избранное",
-        compare: "Сравнить",
-        added: "Добавлено",
-        open: "Открыть",
-
-        priceUnavailable: "Цена недоступна",
-
-        favoritesTitle: "Избранное",
-        emptyFavorites: "Пока нет избранных товаров",
-        remove: "Удалить",
-
-        compareTitle: "Сравнение товаров",
-        compareSubtitle:
-            "Выберите до 4 товаров для сравнения",
-
-        back: "К товарам",
-        clearCompare: "Очистить",
-
-        emptyCompareTitle: "Товары не выбраны",
-        emptyCompareText:
-            "Добавьте минимум 2 товара для сравнения.",
-        showProducts: "Показать товары",
-
-        name: "Название",
-        brand: "Бренд",
-        price: "Цена",
-        ratingLabel: "Рейтинг",
-        stock: "Наличие",
-        store: "Магазин",
-
-        settings: "Настройки",
-        language: "Язык",
-        currency: "Валюта",
-        themes: "Темы",
-
-        mainControls: "Управление главной страницей",
-
-        showThemes:
-            "Показывать темы на главной",
-
-        showCurrency:
-            "Показывать валюту на главной",
-
-        tenThemes: "10 тем",
-
-        light: "Светлая",
-        dark: "Тёмная",
-
-        footer:
-            "Сервис поиска товаров и сравнения цен."
-    },
-
-
-    en: {
-        heroTitle: "Compare prices in seconds",
-        heroText: "Find products and compare prices",
-        searchPlaceholder: "Search for a product...",
-        search: "Search",
-
-        cheap: "Cheapest first",
-        expensive: "Most expensive first",
-        rating: "By rating",
-
-        clear: "Clear",
-
-        products: "Products found",
-        sources: "Sources",
-        average: "Average price",
-        favorites: "Favorites",
-
-        loading: "Loading products...",
-        noProducts: "No products found",
-        searchProduct: "Search for a product",
-        error: "An error occurred",
-
-        favorite: "Favorite",
-        compare: "Compare",
-        added: "Added",
-        open: "Open",
-
-        priceUnavailable: "Price unavailable",
-
-        favoritesTitle: "Favorites",
-        emptyFavorites: "No favorite products yet",
-        remove: "Remove",
-
-        compareTitle: "Product comparison",
-        compareSubtitle:
-            "Select up to 4 products to compare",
-
-        back: "Back to products",
-        clearCompare: "Clear",
-
-        emptyCompareTitle: "No products selected",
-        emptyCompareText:
-            "Add at least 2 products to compare.",
-        showProducts: "Show products",
-
-        name: "Name",
-        brand: "Brand",
-        price: "Price",
-        ratingLabel: "Rating",
-        stock: "Stock",
-        store: "Store",
-
-        settings: "Settings",
-        language: "Language",
-        currency: "Currency",
-        themes: "Themes",
-
-        mainControls: "Homepage controls",
-
-        showThemes:
-            "Show themes on homepage",
-
-        showCurrency:
-            "Show currency on homepage",
-
-        tenThemes: "10 themes",
-
-        light: "Light",
-        dark: "Dark",
-
-        footer:
-            "Product search and price comparison service."
-    }
-
-};
-
-
-/* =========================================================
-   STATE
-========================================================= */
-
-let currentLanguage =
-    localStorage.getItem(STORAGE.language) || "uz";
-
-let currentCurrency =
-    localStorage.getItem(STORAGE.currency) || "UZS";
-
-let currentTheme =
-    localStorage.getItem(STORAGE.theme) || "light";
-
-let showThemes =
-    localStorage.getItem(STORAGE.showThemes) === "true";
-
-let showCurrency =
-    localStorage.getItem(STORAGE.showCurrency) === "true";
-
-
-let allProducts = [];
-
-let favorites = loadArray(STORAGE.favorites);
-
-let comparison = loadArray(STORAGE.comparison);
-
-
-/* =========================================================
-   CURRENCY
-========================================================= */
+// ======================================================
+// CURRENCY
+// ======================================================
 
 const currencyRates = {
     UZS: 1,
     USD: 1 / 12650,
-    EUR: 1 / 13700,
-    RUB: 1 / 150,
-    JPY: 1 / 85
+    EUR: 0.92 / 12650,
+    JPY: 155 / 12650,
+    RUB: 82 / 12650
 };
-
 
 const currencySymbols = {
     UZS: "so'm",
     USD: "$",
     EUR: "€",
-    RUB: "₽",
-    JPY: "¥"
+    JPY: "¥",
+    RUB: "₽"
 };
 
 
-/* =========================================================
-   HELPERS
-========================================================= */
+// ======================================================
+// TRANSLATIONS
+// ======================================================
 
-function $(selector) {
-    return document.querySelector(selector);
-}
+const translations = {
 
+    uz: {
+        heroTitle:
+            "Narxlarni bir necha soniyada solishtiring",
 
-function $all(selector) {
-    return document.querySelectorAll(selector);
-}
+        heroText:
+            "Uzum Market va Yandex Market mahsulotlarini bir joyda solishtiring",
 
+        search:
+            "Mahsulot qidirish...",
 
-function loadArray(key) {
-    try {
-        const data = JSON.parse(
-            localStorage.getItem(key) || "[]"
-        );
+        searchButton:
+            "Qidirish",
 
-        return Array.isArray(data) ? data : [];
+        cheap:
+            "Avval arzonlari",
 
-    } catch {
-        return [];
+        expensive:
+            "Avval qimmatlari",
+
+        rating:
+            "Reyting bo'yicha",
+
+        clear:
+            "Tozalash",
+
+        products:
+            "Mahsulot topildi",
+
+        sources:
+            "Manba",
+
+        average:
+            "O'rtacha narx",
+
+        favorites:
+            "Sevimlilarda",
+
+        compare:
+            "Taqqoslash",
+
+        added:
+            "Tanlandi",
+
+        view:
+            "Ko'rish",
+
+        noProducts:
+            "Mahsulot topilmadi",
+
+        searchFirst:
+            "Mahsulot qidiring",
+
+        loading:
+            "Mahsulotlar qidirilmoqda...",
+
+        favoritesTitle:
+            "Sevimlilar",
+
+        noFavorites:
+            "Hozircha sevimli mahsulotlar yo'q",
+
+        remove:
+            "O'chirish",
+
+        compareTitle:
+            "Mahsulotlarni taqqoslash",
+
+        compareSubtitle:
+            "4 tagacha mahsulot tanlab, xususiyatlarini solishtiring",
+
+        back:
+            "Mahsulotlarga",
+
+        clearCompare:
+            "Tozalash",
+
+        emptyCompare:
+            "Hali mahsulot tanlanmagan",
+
+        emptyCompareText:
+            "Taqqoslash uchun kamida 2 ta mahsulot qo'shing.",
+
+        showProducts:
+            "Mahsulotlarni ko'rish",
+
+        name:
+            "Nomi",
+
+        brand:
+            "Brend",
+
+        price:
+            "Narx",
+
+        ratingLabel:
+            "Reyting",
+
+        stock:
+            "Holati",
+
+        store:
+            "Do'kon"
+    },
+
+    ru: {
+        heroTitle:
+            "Сравнивайте цены за несколько секунд",
+
+        heroText:
+            "Сравнивайте товары Uzum Market и Yandex Market в одном месте",
+
+        search:
+            "Поиск товара...",
+
+        searchButton:
+            "Поиск",
+
+        cheap:
+            "Сначала дешевые",
+
+        expensive:
+            "Сначала дорогие",
+
+        rating:
+            "По рейтингу",
+
+        clear:
+            "Очистить",
+
+        products:
+            "Найдено товаров",
+
+        sources:
+            "Источники",
+
+        average:
+            "Средняя цена",
+
+        favorites:
+            "В избранном",
+
+        compare:
+            "Сравнить",
+
+        added:
+            "Выбрано",
+
+        view:
+            "Открыть",
+
+        noProducts:
+            "Товары не найдены",
+
+        searchFirst:
+            "Найдите товар",
+
+        loading:
+            "Поиск товаров...",
+
+        favoritesTitle:
+            "Избранное",
+
+        noFavorites:
+            "Избранных товаров пока нет",
+
+        remove:
+            "Удалить",
+
+        compareTitle:
+            "Сравнение товаров",
+
+        compareSubtitle:
+            "Выберите до 4 товаров",
+
+        back:
+            "К товарам",
+
+        clearCompare:
+            "Очистить",
+
+        emptyCompare:
+            "Товары не выбраны",
+
+        emptyCompareText:
+            "Добавьте минимум 2 товара для сравнения.",
+
+        showProducts:
+            "Показать товары",
+
+        name:
+            "Название",
+
+        brand:
+            "Бренд",
+
+        price:
+            "Цена",
+
+        ratingLabel:
+            "Рейтинг",
+
+        stock:
+            "Наличие",
+
+        store:
+            "Магазин"
+    },
+
+    en: {
+        heroTitle:
+            "Compare prices in seconds",
+
+        heroText:
+            "Compare products from Uzum Market and Yandex Market in one place",
+
+        search:
+            "Search for a product...",
+
+        searchButton:
+            "Search",
+
+        cheap:
+            "Cheapest first",
+
+        expensive:
+            "Most expensive",
+
+        rating:
+            "By rating",
+
+        clear:
+            "Clear",
+
+        products:
+            "Products found",
+
+        sources:
+            "Sources",
+
+        average:
+            "Average price",
+
+        favorites:
+            "Favorites",
+
+        compare:
+            "Compare",
+
+        added:
+            "Selected",
+
+        view:
+            "View",
+
+        noProducts:
+            "No products found",
+
+        searchFirst:
+            "Search for a product",
+
+        loading:
+            "Searching products...",
+
+        favoritesTitle:
+            "Favorites",
+
+        noFavorites:
+            "No favorite products yet",
+
+        remove:
+            "Remove",
+
+        compareTitle:
+            "Product comparison",
+
+        compareSubtitle:
+            "Select up to 4 products",
+
+        back:
+            "Products",
+
+        clearCompare:
+            "Clear",
+
+        emptyCompare:
+            "No products selected",
+
+        emptyCompareText:
+            "Add at least 2 products to compare.",
+
+        showProducts:
+            "Show products",
+
+        name:
+            "Name",
+
+        brand:
+            "Brand",
+
+        price:
+            "Price",
+
+        ratingLabel:
+            "Rating",
+
+        stock:
+            "Stock",
+
+        store:
+            "Store"
     }
+};
+
+
+// ======================================================
+// INIT
+// ======================================================
+
+function init() {
+
+    document.body.dataset.theme =
+        state.theme;
+
+    languageSelect.value =
+        state.language;
+
+    currencySelect.value =
+        state.currency;
+
+    updateTranslations();
+    updateCounts();
+    updateCompare();
+
 }
 
+init();
 
-function saveArray(key, value) {
-    localStorage.setItem(
-        key,
-        JSON.stringify(value)
-    );
-}
 
+// ======================================================
+// TRANSLATION
+// ======================================================
 
 function t(key) {
+
     return (
-        translations[currentLanguage]?.[key] ||
+        translations[state.language]?.[key] ||
         translations.uz[key] ||
         key
     );
+
+}
+
+function updateTranslations() {
+
+    document.getElementById("heroTitle").textContent =
+        t("heroTitle");
+
+    document.getElementById("heroText").textContent =
+        t("heroText");
+
+    searchInput.placeholder =
+        t("search");
+
+    searchButton.innerHTML =
+        `<i class="fa-solid fa-search"></i> ${t("searchButton")}`;
+
+    document.getElementById("clearText").textContent =
+        t("clear");
+
+    document.getElementById("productsText").textContent =
+        t("products");
+
+    document.getElementById("sourcesText").textContent =
+        t("sources");
+
+    document.getElementById("averageText").textContent =
+        t("average");
+
+    document.getElementById("favoritesText").textContent =
+        t("favorites");
+
+    document.getElementById("compareTitle").textContent =
+        t("compareTitle");
+
+    document.getElementById("compareSubtitle").textContent =
+        t("compareSubtitle");
+
+    document.getElementById("compareBackText").textContent =
+        t("back");
+
+    document.getElementById("clearCompareText").textContent =
+        t("clearCompare");
+
+    document.getElementById("compareEmptyTitle").textContent =
+        t("emptyCompare");
+
+    document.getElementById("compareEmptyText").textContent =
+        t("emptyCompareText");
+
+    document.getElementById("compareGoProductsText").textContent =
+        t("showProducts");
+
+    document.getElementById("favoritesTitle").textContent =
+        t("favoritesTitle");
+
+    if (state.products.length) {
+        renderProducts();
+    }
+
 }
 
 
-/* =========================================================
-   PRICE
-========================================================= */
+// ======================================================
+// SEARCH
+// ======================================================
 
-function hasPrice(product) {
+searchButton.addEventListener(
+    "click",
+    searchProducts
+);
 
-    const price = Number(product?.price);
+searchInput.addEventListener(
+    "keydown",
+    event => {
 
-    return Number.isFinite(price) && price > 0;
+        if (event.key === "Enter") {
+            searchProducts();
+        }
+
+    }
+);
+
+
+function normalizeSearchText(text) {
+
+    return String(text || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\u0400-\u04ff\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
 }
 
 
-function getProductPrice(product) {
+function productMatchesQuery(product, query) {
 
-    if (!hasPrice(product)) {
-        return null;
+    const normalizedQuery =
+        normalizeSearchText(query);
+
+    if (!normalizedQuery) {
+        return false;
     }
 
-    return Number(product.price);
+    const searchText =
+        normalizeSearchText(
+            [
+                product?.name,
+                product?.title,
+                product?.brand,
+                product?.category,
+                product?.description,
+                product?.model
+            ]
+                .filter(Boolean)
+                .join(" ")
+        );
+
+    if (!searchText) {
+        return false;
+    }
+
+    const groupDefinitions = {
+        headphone: [
+            "headphone",
+            "earphone",
+            "earbuds"
+        ]
+    };
+
+    for (const [group, groupWords] of Object.entries(groupDefinitions)) {
+
+        const forbiddenGroups = {
+            headphone: [
+                "headphone",
+                "earphone",
+                "earbuds"
+            ]
+        };
+
+        const forbidden =
+            forbiddenGroups[group] || [];
+
+        if (
+            forbidden.some(word =>
+                searchText.includes(
+                    normalizeSearchText(word)
+                )
+            )
+        ) {
+            return false;
+        }
+
+        const matched =
+            groupWords.some(word =>
+                searchText.includes(
+                    normalizeSearchText(word)
+                )
+            );
+
+        if (!matched) {
+            continue;
+        }
+
+        const queryWords =
+            normalizedQuery
+                .split(" ")
+                .filter(word => word.length >= 3);
+
+        const matchedWords =
+            queryWords.filter(word =>
+                searchText.includes(word)
+            );
+
+        if (
+            queryWords.length >= 2 &&
+            matchedWords.length === 0
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    const words =
+        normalizedQuery
+            .split(" ")
+            .filter(word => word.length >= 3);
+
+    if (!words.length) {
+        return false;
+    }
+
+    const matched =
+        words.filter(word =>
+            searchText.includes(word)
+        );
+
+    return (
+        matched.length >=
+        Math.max(1, Math.ceil(words.length / 2))
+    );
+
 }
 
 
-function formatPrice(price) {
+function filterRelevantProducts(products, query) {
 
-    if (
-        price === null ||
-        price === undefined ||
-        !Number.isFinite(Number(price)) ||
-        Number(price) <= 0
-    ) {
-        return t("priceUnavailable");
+    return products.filter(product =>
+        productMatchesQuery(product, query)
+    );
+
+}
+
+
+async function searchProducts() {
+
+    const query =
+        searchInput.value.trim();
+
+    if (!query) {
+
+        productsContainer.innerHTML = `
+            <div class="empty-message">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <p>${t("searchFirst")}</p>
+            </div>
+        `;
+
+        return;
     }
 
 
-    const converted =
-        Number(price) * currencyRates[currentCurrency];
-
-
-    let locale = "uz-UZ";
-
-    if (currentLanguage === "ru") {
-        locale = "ru-RU";
-    }
-
-    if (currentLanguage === "en") {
-        locale = "en-US";
-    }
-
-
-    const decimals =
-        currentCurrency === "UZS" ||
-        currentCurrency === "JPY"
-            ? 0
-            : 2;
+    productsContainer.innerHTML = `
+        <div class="loading-message">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <p>${t("loading")}</p>
+        </div>
+    `;
 
 
     try {
 
-        return new Intl.NumberFormat(
-            locale,
-            {
-                minimumFractionDigits: decimals,
-                maximumFractionDigits: decimals
+        const response =
+            await fetch(
+                `/api/search?q=${encodeURIComponent(query)}`
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok || !data.success) {
+            const errorCode = data?.error || "API_ERROR";
+
+            if (errorCode === "API_QUOTA_EXCEEDED") {
+                throw Object.assign(
+                    new Error(
+                        data.message || "Product provider API quota has been exceeded. Please try again later."
+                    ),
+                    {
+                        code: "API_QUOTA_EXCEEDED",
+                        userMessage: "Mahsulotlarni yuklab bo‘lmadi. Ma’lumot manbasi limiti tugagan. Keyinroq qayta urinib ko‘ring."
+                    }
+                );
             }
-        ).format(converted)
-        + " "
-        + currencySymbols[currentCurrency];
 
-    } catch {
-
-        return `${Math.round(converted)} ${currencySymbols[currentCurrency]}`;
-    }
-}
-
-
-/* =========================================================
-   THEME
-========================================================= */
-
-function applyTheme(theme) {
-
-    const exists = THEMES.some(
-        item => item.id === theme
-    );
-
-    if (!exists) {
-        theme = "light";
-    }
-
-    currentTheme = theme;
-
-    document.body.setAttribute(
-        "data-theme",
-        theme
-    );
-
-    localStorage.setItem(
-        STORAGE.theme,
-        theme
-    );
-
-    updateThemeUI();
-}
-
-
-function updateThemeUI() {
-
-    $all(".theme-option").forEach(button => {
-
-        button.classList.toggle(
-            "active",
-            button.dataset.theme === currentTheme
-        );
-
-    });
-
-
-    $all(".theme-swatch").forEach(button => {
-
-        button.classList.toggle(
-            "active",
-            button.dataset.theme === currentTheme
-        );
-
-    });
-
-
-    $all(".main-theme-dropdown-item").forEach(button => {
-
-        button.classList.toggle(
-            "active",
-            button.dataset.theme === currentTheme
-        );
-
-    });
-}
-
-
-/* =========================================================
-   BUILD ALL THEMES
-========================================================= */
-
-function renderThemeOptions() {
-
-    const container =
-        $("#settingsThemeOptions");
-
-    if (!container) return;
-
-
-    container.innerHTML = "";
-
-
-    THEMES.forEach(theme => {
-
-        const button =
-            document.createElement("button");
-
-        button.type = "button";
-
-        button.className = "theme-swatch";
-
-        button.dataset.theme = theme.id;
-
-
-        const preview =
-            document.createElement("div");
-
-        preview.className =
-            "swatch-preview";
-
-
-        theme.colors.forEach(color => {
-
-            const span =
-                document.createElement("span");
-
-            span.style.background = color;
-
-            preview.appendChild(span);
-
-        });
-
-
-        const name =
-            document.createElement("div");
-
-        name.className = "swatch-name";
-
-
-        const title =
-            document.createElement("span");
-
-        title.textContent =
-            theme.name[currentLanguage];
-
-
-        const icon =
-            document.createElement("i");
-
-        icon.className =
-            "fa-solid fa-check";
-
-
-        name.appendChild(title);
-        name.appendChild(icon);
-
-
-        button.appendChild(preview);
-        button.appendChild(name);
-
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                applyTheme(theme.id);
-
+            if (errorCode === "API_UNAVAILABLE") {
+                throw Object.assign(
+                    new Error(
+                        data.message || "Product data service is temporarily unavailable. Please try again later."
+                    ),
+                    {
+                        code: "API_UNAVAILABLE",
+                        userMessage: "Mahsulotlarni yuklab bo‘lmadi. Ma’lumot manbasi vaqtincha ishlamayapti. Keyinroq qayta urinib ko‘ring."
+                    }
+                );
             }
-        );
+
+            throw new Error(
+                data.message || "API error"
+            );
+        }
 
 
-        container.appendChild(button);
+        state.products =
+            Array.isArray(data.products)
+                ? data.products
+                : [];
 
-    });
+
+        state.filteredProducts =
+            [...state.products];
 
 
-    updateThemeUI();
+        // Maximum price filterni avtomatik moslaymiz
+
+        const prices =
+            state.products
+                .map(p => Number(p.price || 0))
+                .filter(p => p > 0);
+
+
+        if (prices.length) {
+
+            const max =
+                Math.ceil(
+                    Math.max(...prices) /
+                    100000
+                ) * 100000;
+
+            priceRange.max =
+                convertFromUZS(max);
+
+            priceRange.value =
+                priceRange.max;
+
+        }
+
+
+        updatePriceText();
+        updateStats();
+        renderProducts();
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        const isQuota =
+            error?.code === "API_QUOTA_EXCEEDED";
+
+        const isUnavailable =
+            error?.code === "API_UNAVAILABLE" ||
+            error instanceof TypeError;
+
+        const message =
+            isQuota
+                ? "Mahsulotlarni yuklab bo‘lmadi. Ma’lumot manbasi limiti tugagan. Keyinroq qayta urinib ko‘ring."
+                : isUnavailable
+                    ? "Mahsulotlarni yuklab bo‘lmadi. Ma’lumot manbasi vaqtincha ishlamayapti. Keyinroq qayta urinib ko‘ring."
+                    : error?.userMessage ||
+                        "Ma'lumot olishda xatolik yuz berdi";
+
+        const detail =
+            isQuota || isUnavailable
+                ? ""
+                : `<small>${error.message}</small>`;
+
+        productsContainer.innerHTML = `
+            <div class="error-message">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <p>${message}</p>
+                ${detail}
+            </div>
+        `;
+
+    }
+
 }
 
 
-/* =========================================================
-   MAIN THEME DROPDOWN
-========================================================= */
+// ======================================================
+// IMAGE URL
+// ======================================================
 
-function renderMainThemeDropdown() {
+function getImageUrl(product) {
 
-    const dropdown =
-        $("#mainThemeDropdown");
-
-    if (!dropdown) return;
-
-
-    dropdown.innerHTML = "";
-
-
-    THEMES.forEach(theme => {
-
-        const button =
-            document.createElement("button");
-
-        button.type = "button";
-
-        button.className =
-            "main-theme-dropdown-item";
-
-        button.dataset.theme =
-            theme.id;
-
-
-        const dot =
-            document.createElement("span");
-
-        dot.className = "swatch-dot";
-
-        dot.style.background =
-            theme.colors[2];
-
-
-        const text =
-            document.createElement("span");
-
-        text.textContent =
-            theme.name[currentLanguage];
-
-
-        button.appendChild(dot);
-        button.appendChild(text);
-
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                applyTheme(theme.id);
-
-                dropdown.classList.remove("active");
-
-            }
-        );
-
-
-        dropdown.appendChild(button);
-
-    });
-
-
-    updateThemeUI();
-}
-
-
-/* =========================================================
-   LANGUAGE
-========================================================= */
-
-function applyLanguage(language) {
-
-    if (!translations[language]) {
-        language = "uz";
+    if (!product.image) {
+        return "";
     }
 
 
-    currentLanguage = language;
-
-    localStorage.setItem(
-        STORAGE.language,
-        language
-    );
-
-
-    document.documentElement.lang =
-        language;
-
-
-    const languageSelect =
-        $("#languageSelect");
-
-    if (languageSelect) {
-        languageSelect.value =
-            language;
+    if (typeof product.image === "string") {
+        return product.image;
     }
 
 
-    updateTranslations();
+    if (product.image.link) {
 
-    renderSettingsLanguage();
+        return (
+            product.image.link.high ||
+            product.image.link.low ||
+            ""
+        );
 
-    renderThemeOptions();
+    }
 
-    renderMainThemeDropdown();
 
-    updateThemeUI();
+    return "";
 
-    renderProducts();
-
-    renderFavorites();
-
-    renderComparison();
-
-    updateStats();
 }
 
 
-/* =========================================================
-   TRANSLATIONS UI
-========================================================= */
+// ======================================================
+// PRICE
+// ======================================================
 
-function updateTranslations() {
+function convertFromUZS(
+    uzs
+) {
 
-    const map = {
+    const rate =
+        currencyRates[state.currency] ||
+        1;
 
-        heroTitle: "heroTitle",
-        heroText: "heroText",
+    return uzs * rate;
 
-        searchButtonText: "search",
+}
 
-        clearText: "clear",
 
-        productsText: "products",
-        sourcesText: "sources",
-        averageText: "average",
-        favoritesText: "favorites",
+function formatPrice(
+    uzs
+) {
 
-        compareBackText: "back",
-        compareTitle: "compareTitle",
-        compareSubtitle: "compareSubtitle",
+    const value =
+        convertFromUZS(
+            Number(uzs || 0)
+        );
 
-        clearCompareText: "clearCompare",
 
-        compareEmptyTitle:
-            "emptyCompareTitle",
+    if (!value) {
+        return "Narx mavjud emas";
+    }
 
-        compareEmptyText:
-            "emptyCompareText",
 
-        compareGoProductsText:
-            "showProducts",
-
-        favoritesTitle:
-            "favoritesTitle",
-
-        settingsTitle:
-            "settings",
-
-        settingsLanguageLabel:
-            "language",
-
-        settingsCurrencyLabel:
-            "currency",
-
-        settingsThemeLabel:
-            "themes",
-
-        settingsMainControlsLabel:
-            "mainControls",
-
-        toggleThemeWidgetText:
-            "showThemes",
-
-        toggleHomepageCurrencyText:
-            "showCurrency",
-
-        allThemesText:
-            "tenThemes",
-
-        footerText:
-            "footer",
-
-        initialMessage:
-            "searchProduct"
+    const locales = {
+        UZS: "uz-UZ",
+        USD: "en-US",
+        EUR: "de-DE",
+        JPY: "ja-JP",
+        RUB: "ru-RU"
     };
 
 
-    Object.entries(map).forEach(
-        ([id, key]) => {
-
-            const element =
-                document.getElementById(id);
-
-            if (element) {
-                element.textContent = t(key);
-            }
-
+    return new Intl.NumberFormat(
+        locales[state.currency] || "uz-UZ",
+        {
+            maximumFractionDigits:
+                state.currency === "UZS" ||
+                state.currency === "JPY"
+                    ? 0
+                    : 2
         }
-    );
+    ).format(value)
+        + " "
+        + currencySymbols[state.currency];
 
-
-    const search =
-        $("#search");
-
-    if (search) {
-        search.placeholder =
-            t("searchPlaceholder");
-    }
-
-
-    const sort =
-        $("#sort");
-
-    if (sort) {
-
-        const cheap =
-            sort.querySelector(
-                'option[value="cheap"]'
-            );
-
-        const expensive =
-            sort.querySelector(
-                'option[value="expensive"]'
-            );
-
-        const rating =
-            sort.querySelector(
-                'option[value="rating"]'
-            );
-
-
-        if (cheap)
-            cheap.textContent = t("cheap");
-
-        if (expensive)
-            expensive.textContent = t("expensive");
-
-        if (rating)
-            rating.textContent = t("rating");
-
-    }
-
-
-    $all("[data-theme-text]").forEach(
-        element => {
-
-            const key =
-                element.dataset.themeText;
-
-            if (key === "light") {
-                element.textContent =
-                    t("light");
-            }
-
-            if (key === "dark") {
-                element.textContent =
-                    t("dark");
-            }
-
-        }
-    );
 }
 
 
-/* =========================================================
-   SETTINGS LANGUAGE
-========================================================= */
+function isValidProductUrl(url) {
 
-function renderSettingsLanguage() {
+    if (!url || typeof url !== "string") {
+        return false;
+    }
 
-    const container =
-        $("#settingsLanguageOptions");
+    const value = url.trim();
 
-    if (!container) return;
+    if (!value) return false;
+    if (value === "#") return false;
+    if (value === "null") return false;
+    if (value === "undefined") return false;
+    if (value.startsWith("javascript:")) return false;
+
+    try {
+
+        const parsed = new URL(value);
+
+        return (
+            parsed.protocol === "http:" ||
+            parsed.protocol === "https:"
+        );
+
+    } catch {
+        return false;
+    }
+
+}
 
 
-    container.innerHTML = "";
-
-
-    const languages = [
-        {
-            id: "uz",
-            name: "O'zbekcha",
-            flag: "🇺🇿"
-        },
-        {
-            id: "ru",
-            name: "Русский",
-            flag: "🇷🇺"
-        },
-        {
-            id: "en",
-            name: "English",
-            flag: "🇬🇧"
-        }
+function getProductUrl(product) {
+    const candidates = [
+        product?.productUrl,
+        product?.url
     ];
 
-
-    languages.forEach(language => {
-
-        const button =
-            document.createElement("button");
-
-        button.type = "button";
-
-        button.className =
-            "settings-option";
-
-
-        if (
-            currentLanguage === language.id
-        ) {
-            button.classList.add("active");
+    for (const candidate of candidates) {
+        if (isValidProductUrl(candidate)) {
+            return candidate.trim();
         }
+    }
 
+    const productName =
+        String(
+            product?.name ||
+            product?.title ||
+            "product"
+        ).trim();
 
-        button.innerHTML = `
-            <span>
-                ${language.flag}
-                ${language.name}
-            </span>
+    const source =
+        String(
+            product?.source ||
+            product?.store ||
+            ""
+        ).toLowerCase();
 
-            <i class="fa-solid fa-check check-icon"></i>
+    const query =
+        encodeURIComponent(productName || "product");
+
+    if (source.includes("uzum")) {
+        return `https://uzum.uz/ru/search?query=${query}`;
+    }
+
+    if (source.includes("yandex")) {
+        return `https://market.yandex.uz/search?text=${query}`;
+    }
+
+    return `https://www.google.com/search?q=${query}`;
+}
+
+function getCompareImage(product) {
+    const image = getImageUrl(product);
+
+    if (!image) {
+        return `
+            <div class="compare-image empty">
+                <i class="fa-solid fa-image"></i>
+            </div>
         `;
+    }
+
+    return `
+        <img
+            src="${escapeHtml(image)}"
+            alt="${escapeHtml(product.name || "Product")}" 
+            loading="lazy"
+            onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='flex');"
+        >
+        <div class="compare-image fallback" style="display:none;">
+            <i class="fa-solid fa-image"></i>
+        </div>
+    `;
+}
 
 
-        button.addEventListener(
-            "click",
-            () => {
+// ======================================================
+// PRODUCTS RENDER
+// ======================================================
 
-                applyLanguage(
-                    language.id
-                );
+function renderProducts() {
 
+    let products =
+        [...state.products];
+
+
+    const maxPrice =
+        Number(priceRange.value || Infinity);
+
+
+    products =
+        products.filter(product => {
+
+            if (!product.price) {
+                return false;
             }
-        );
 
-
-        container.appendChild(button);
-
-    });
-}
-
-
-/* =========================================================
-   SETTINGS CURRENCY
-========================================================= */
-
-function renderSettingsCurrency() {
-
-    const container =
-        $("#settingsCurrencyOptions");
-
-    if (!container) return;
-
-
-    container.innerHTML = "";
-
-
-    const currencies = [
-        {
-            id: "UZS",
-            name: "UZS so'm"
-        },
-        {
-            id: "USD",
-            name: "USD $"
-        },
-        {
-            id: "EUR",
-            name: "EUR €"
-        },
-        {
-            id: "RUB",
-            name: "RUB ₽"
-        },
-        {
-            id: "JPY",
-            name: "JPY ¥"
-        }
-    ];
-
-
-    currencies.forEach(currency => {
-
-        const button =
-            document.createElement("button");
-
-        button.type = "button";
-
-        button.className =
-            "settings-option";
-
-
-        if (
-            currentCurrency === currency.id
-        ) {
-            button.classList.add("active");
-        }
-
-
-        button.innerHTML = `
-            <span>${currency.name}</span>
-            <i class="fa-solid fa-check check-icon"></i>
-        `;
-
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                currentCurrency =
-                    currency.id;
-
-                localStorage.setItem(
-                    STORAGE.currency,
-                    currentCurrency
-                );
-
-
-                const mainSelect =
-                    $("#mainCurrencySelect");
-
-                if (mainSelect) {
-                    mainSelect.value =
-                        currentCurrency;
-                }
-
-
-                renderSettingsCurrency();
-
-                updatePriceDisplay();
-
-                renderProducts();
-
-                renderFavorites();
-
-                renderComparison();
-
-                updateStats();
-
-            }
-        );
-
-
-        container.appendChild(button);
-
-    });
-}
-
-
-/* =========================================================
-   MAIN CONTROLS
-========================================================= */
-
-function updateMainControls() {
-
-    const themeControl =
-        $("#mainThemeControl");
-
-    const currencyControl =
-        $("#mainCurrencyControl");
-
-
-    if (themeControl) {
-
-        themeControl.hidden =
-            !showThemes;
-
-    }
-
-
-    if (currencyControl) {
-
-        currencyControl.hidden =
-            !showCurrency;
-
-    }
-
-
-    const themeToggle =
-        $("#toggleThemeWidget");
-
-    const currencyToggle =
-        $("#toggleHomepageCurrency");
-
-
-    if (themeToggle) {
-
-        themeToggle.classList.toggle(
-            "active",
-            showThemes
-        );
-
-    }
-
-
-    if (currencyToggle) {
-
-        currencyToggle.classList.toggle(
-            "active",
-            showCurrency
-        );
-
-    }
-}
-
-
-/* =========================================================
-   FILTER
-========================================================= */
-
-let maxPrice = 20000000;
-
-
-function getFilteredProducts() {
-
-    let list = [...allProducts];
-
-
-    const sort =
-        $("#sort")?.value || "cheap";
-
-
-    list = list.filter(product => {
-
-        const price =
-            getProductPrice(product);
-
-
-        if (price === null) {
-            return true;
-        }
-
-
-        return price <= maxPrice;
-
-    });
-
-
-    if (sort === "cheap") {
-
-        list.sort((a, b) => {
-
-            const pa = getProductPrice(a);
-            const pb = getProductPrice(b);
-
-
-            if (pa === null) return 1;
-            if (pb === null) return -1;
-
-            return pa - pb;
+            return (
+                convertFromUZS(
+                    Number(product.price)
+                ) <= maxPrice
+            );
 
         });
 
-    }
 
+    if (sortSelect.value === "cheap") {
 
-    if (sort === "expensive") {
-
-        list.sort((a, b) => {
-
-            const pa = getProductPrice(a);
-            const pb = getProductPrice(b);
-
-
-            if (pa === null) return 1;
-            if (pb === null) return -1;
-
-            return pb - pa;
-
-        });
+        products.sort(
+            (a, b) =>
+                Number(a.price || 0) -
+                Number(b.price || 0)
+        );
 
     }
 
 
-    if (sort === "rating") {
+    if (sortSelect.value === "expensive") {
 
-        list.sort(
+        products.sort(
+            (a, b) =>
+                Number(b.price || 0) -
+                Number(a.price || 0)
+        );
+
+    }
+
+
+    if (sortSelect.value === "rating") {
+
+        products.sort(
             (a, b) =>
                 Number(b.rating || 0) -
                 Number(a.rating || 0)
@@ -1269,185 +1097,82 @@ function getFilteredProducts() {
     }
 
 
-    return list;
-}
+    state.filteredProducts =
+        products;
 
 
-/* =========================================================
-   PRICE DISPLAY
-========================================================= */
+    if (!products.length) {
 
-function updatePriceDisplay() {
-
-    const input =
-        $("#priceInput");
-
-    const range =
-        $("#priceRange");
-
-
-    if (!input || !range) return;
-
-
-    maxPrice =
-        Number(range.value);
-
-
-    input.value =
-        Math.round(maxPrice).toLocaleString(
-            currentLanguage === "ru"
-                ? "ru-RU"
-                : "uz-UZ"
-        );
-
-
-    const display =
-        $("#priceDisplay");
-
-    if (display) {
-        display.textContent = "≤";
-    }
-
-
-    const percent =
-        (maxPrice /
-            Number(range.max)) * 100;
-
-
-    range.style.setProperty(
-        "--value",
-        `${percent}%`
-    );
-}
-
-
-/* =========================================================
-   PRODUCTS
-========================================================= */
-
-function renderProducts() {
-
-    const container =
-        $("#products");
-
-    if (!container) return;
-
-
-    const list =
-        getFilteredProducts();
-
-
-    if (!list.length) {
-
-        container.innerHTML = `
+        productsContainer.innerHTML = `
             <div class="empty-message">
                 <i class="fa-solid fa-box-open"></i>
                 <p>${t("noProducts")}</p>
             </div>
         `;
 
-        updateStats();
-
         return;
     }
 
 
-    container.innerHTML =
-        list.map(
-            product => createProductCard(product)
+    productsContainer.innerHTML =
+        products.map(
+            productCard
         ).join("");
 
-
-    bindProductButtons();
-
-    updateStats();
 }
 
 
-/* =========================================================
-   PRODUCT CARD
-========================================================= */
+// ======================================================
+// PRODUCT CARD
+// ======================================================
 
-function createProductCard(product) {
+function productCard(product) {
 
-    const id =
-        String(
-            product.id ||
-            product.productId ||
-            Math.random()
+    const image =
+        getImageUrl(product);
+
+
+    const favorite =
+        state.favorites.includes(
+            product.id
         );
 
 
-    const name =
-        escapeHtml(
-            product.name ||
-            "Product"
-        );
-
-
-    const price =
-        formatPrice(
-            getProductPrice(product)
-        );
+    const compared =
+        normalizeComparisonSelection(
+            state.comparison
+        ).some(item => item.id === product.id);
 
 
     const rating =
         Number(product.rating || 0);
 
 
-    const store =
-        escapeHtml(
-            product.store ||
-            product.source ||
-            "Market"
-        );
-
-
-    const brand =
-        escapeHtml(
-            product.brand ||
-            ""
-        );
-
-
-    const image =
-        getImageUrl(product);
-
-
-    const url =
-        getProductUrl(product);
-
-
-    const favorite =
-        favorites.some(
-            item => String(item.id) === id
-        );
-
-
-    const compared =
-        comparison.some(
-            item => String(item.id) === id
-        );
+    const stars =
+        rating
+            ? "★".repeat(
+                Math.round(rating)
+            )
+            : "☆";
 
 
     return `
         <article
             class="product-card"
-            data-id="${escapeAttr(id)}"
+            data-id="${escapeHtml(product.id)}"
         >
 
-            <div class="product-image ${
-                image ? "" : "no-image"
-            }">
+            <div class="product-image
+                ${image ? "" : "no-image"}">
 
                 ${
                     image
                         ? `
                             <img
-                                src="${escapeAttr(image)}"
-                                alt="${name}"
+                                src="${escapeHtml(image)}"
+                                alt="${escapeHtml(product.name)}"
                                 loading="lazy"
-                                onerror="this.style.display='none';this.parentElement.classList.add('no-image');"
+                                onerror="this.parentElement.classList.add('no-image'); this.remove();"
                             >
                         `
                         : `
@@ -1457,20 +1182,15 @@ function createProductCard(product) {
 
 
                 <button
-                    class="favorite-btn ${
-                        favorite ? "active" : ""
-                    }"
-                    data-action="favorite"
-                    type="button"
-                    title="${t("favorite")}"
+                    class="favorite-btn ${favorite ? "active" : ""}"
+                    onclick="toggleFavorite('${escapeJs(product.id)}')"
+                    title="Favorite"
                 >
-
-                    <i class="fa-${
+                    <i class="${
                         favorite
-                            ? "solid"
-                            : "regular"
+                            ? "fa-solid"
+                            : "fa-regular"
                     } fa-heart"></i>
-
                 </button>
 
             </div>
@@ -1479,63 +1199,54 @@ function createProductCard(product) {
             <div class="product-content">
 
                 <span class="product-store">
-                    ${store}
+                    ${
+                        product.source === "uzum"
+                            ? "Uzum Market"
+                            : "Yandex Market"
+                    }
                 </span>
 
 
                 <h3 class="product-name">
-                    ${name}
+                    ${escapeHtml(product.name)}
                 </h3>
 
 
                 <div class="product-price">
-                    ${price}
+                    ${formatPrice(product.price)}
                 </div>
 
 
                 <div class="product-rating">
-
                     ${
-                        rating > 0
-                            ? `⭐ ${rating.toFixed(1)}`
-                            : ""
+                        rating
+                            ? `${stars} ${rating}/5`
+                            : "Reyting mavjud emas"
                     }
-
                 </div>
 
 
                 <div class="product-meta">
-
-                    ${
-                        brand
-                            ? `${t("brand")}: ${brand}`
-                            : ""
-                    }
-
+                    ${escapeHtml(product.stock || "Mavjud")}
                 </div>
 
 
                 <div class="product-actions">
 
                     <a
-                        href="${escapeAttr(url)}"
+                        href="${escapeHtml(getProductUrl(product))}"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
-
-                        ${t("open")}
-
+                        ${t("view")}
                     </a>
 
 
                     <button
                         class="compare-btn"
-                        data-action="compare"
-                        type="button"
+                        onclick="toggleCompare('${escapeJs(product.id)}')"
                     >
-
                         <i class="fa-solid fa-code-compare"></i>
 
                         ${
@@ -1543,7 +1254,6 @@ function createProductCard(product) {
                                 ? t("added")
                                 : t("compare")
                         }
-
                     </button>
 
                 </div>
@@ -1552,227 +1262,113 @@ function createProductCard(product) {
 
         </article>
     `;
+
 }
 
 
-/* =========================================================
-   IMAGE
-========================================================= */
+// ======================================================
+// FAVORITES
+// ======================================================
 
-function getImageUrl(product) {
-
-    if (!product) return "";
-
-
-    if (
-        typeof product.image === "string"
-    ) {
-        return product.image;
-    }
-
-
-    if (
-        product.image &&
-        typeof product.image === "object"
-    ) {
-
-        return (
-            product.image.url ||
-            product.image.src ||
-            product.image.original ||
-            product.image.preview ||
-            ""
-        );
-
-    }
-
-
-    return (
-        product.imageUrl ||
-        product.thumbnail ||
-        product.photo ||
-        ""
-    );
-}
-
-
-/* =========================================================
-   PRODUCT URL
-========================================================= */
-
-function getProductUrl(product) {
-
-    if (!product) {
-        return "#";
-    }
-
-
-    return (
-        product.productUrl ||
-        product.url ||
-        "#"
-    );
-}
-
-
-/* =========================================================
-   BUTTON EVENTS
-========================================================= */
-
-function bindProductButtons() {
-
-    $all(
-        '[data-action="favorite"]'
-    ).forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                const card =
-                    button.closest(
-                        ".product-card"
-                    );
-
-                const id =
-                    card?.dataset.id;
-
-
-                const product =
-                    allProducts.find(
-                        item =>
-                            String(item.id) ===
-                            String(id)
-                    );
-
-
-                if (product) {
-                    toggleFavorite(product);
-                }
-
-            }
-        );
-
-    });
-
-
-    $all(
-        '[data-action="compare"]'
-    ).forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                const card =
-                    button.closest(
-                        ".product-card"
-                    );
-
-                const id =
-                    card?.dataset.id;
-
-
-                const product =
-                    allProducts.find(
-                        item =>
-                            String(item.id) ===
-                            String(id)
-                    );
-
-
-                if (product) {
-                    toggleComparison(product);
-                }
-
-            }
-        );
-
-    });
-}
-
-
-/* =========================================================
-   FAVORITES
-========================================================= */
-
-function toggleFavorite(product) {
-
-    const id =
-        String(product.id);
-
+window.toggleFavorite =
+function(id) {
 
     const index =
-        favorites.findIndex(
-            item =>
-                String(item.id) === id
-        );
+        state.favorites.indexOf(id);
 
 
-    if (index >= 0) {
+    if (index === -1) {
 
-        favorites.splice(index, 1);
+        state.favorites.push(id);
 
     } else {
 
-        favorites.push(product);
+        state.favorites.splice(
+            index,
+            1
+        );
 
     }
 
 
-    saveArray(
-        STORAGE.favorites,
-        favorites
+    localStorage.setItem(
+        "pricecompare_favorites",
+        JSON.stringify(state.favorites)
     );
 
 
-    updateFavoriteCounts();
-
+    updateCounts();
     renderProducts();
-
     renderFavorites();
-}
+
+};
 
 
-function updateFavoriteCounts() {
+// ======================================================
+// FAVORITES MODAL
+// ======================================================
 
-    const count =
-        favorites.length;
+favoritesBtn.addEventListener(
+    "click",
+    () => {
 
+        renderFavorites();
 
-    const header =
-        $("#headerFavCount");
+        favoritesModal.classList.add(
+            "active"
+        );
 
-    const stats =
-        $("#statsFavCount");
-
-
-    if (header)
-        header.textContent = count;
-
-
-    if (stats)
-        stats.textContent = count;
-}
+    }
+);
 
 
-/* =========================================================
-   FAVORITES MODAL
-========================================================= */
+closeModal.addEventListener(
+    "click",
+    () => {
+
+        favoritesModal.classList.remove(
+            "active"
+        );
+
+    }
+);
+
+
+favoritesModal.addEventListener(
+    "click",
+    event => {
+
+        if (
+            event.target ===
+            favoritesModal
+        ) {
+
+            favoritesModal.classList.remove(
+                "active"
+            );
+
+        }
+
+    }
+);
+
 
 function renderFavorites() {
 
-    const container =
-        $("#favoritesList");
+    const items =
+        state.products.filter(
+            product =>
+                state.favorites.includes(
+                    product.id
+                )
+        );
 
-    if (!container) return;
 
+    if (!items.length) {
 
-    if (!favorites.length) {
-
-        container.innerHTML = `
+        favoritesList.innerHTML = `
             <div class="empty-message">
-                ${t("emptyFavorites")}
+                ${t("noFavorites")}
             </div>
         `;
 
@@ -1780,616 +1376,775 @@ function renderFavorites() {
     }
 
 
-    container.innerHTML =
-        favorites.map(product => {
+    favoritesList.innerHTML =
+        items.map(
+            product => {
 
-            const image =
-                getImageUrl(product);
+                const image =
+                    getImageUrl(product);
 
 
-            return `
-                <div
-                    class="favorite-item"
-                    data-id="${escapeAttr(String(product.id))}"
-                >
+                return `
+                    <div class="favorite-item">
 
-                    ${
-                        image
-                            ? `
-                                <img
-                                    src="${escapeAttr(image)}"
-                                    alt=""
-                                >
-                            `
-                            : `
-                                <div
-                                    style="
-                                    width:70px;
-                                    height:70px;
-                                    display:flex;
-                                    align-items:center;
-                                    justify-content:center;
-                                    background:var(--card2);
-                                    border-radius:10px;
-                                    "
-                                >
+                        ${
+                            image
+                                ? `<img src="${escapeHtml(image)}">`
+                                : `<div style="width:70px;height:70px;display:flex;align-items:center;justify-content:center;">
                                     <i class="fa-solid fa-image"></i>
-                                </div>
-                            `
-                    }
+                                  </div>`
+                        }
 
 
-                    <div class="favorite-item-info">
+                        <div class="favorite-item-info">
 
-                        <strong>
-                            ${escapeHtml(product.name || "")}
-                        </strong>
+                            <strong>
+                                ${escapeHtml(product.name)}
+                            </strong>
 
-                        <span>
-                            ${formatPrice(getProductPrice(product))}
-                        </span>
+                            <span>
+                                ${formatPrice(product.price)}
+                            </span>
+
+                        </div>
+
+
+                        <button
+                            onclick="toggleFavorite('${escapeJs(product.id)}')"
+                        >
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
 
                     </div>
+                `;
+
+            }
+        ).join("");
+
+}
 
 
-                    <button
-                        type="button"
-                        data-remove-favorite
-                    >
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
+// ======================================================
+// COMPARE
+// ======================================================
 
+window.toggleCompare =
+function(id) {
+    const normalizedSelection = normalizeComparisonSelection(state.comparison);
+    const product =
+        state.products.find(
+            item => item.id === id
+        ) ||
+        normalizedSelection.find(
+            item => item.id === id
+        );
+
+    if (!product) {
+        return;
+    }
+
+    const selected = [...normalizedSelection];
+    const index = selected.findIndex(item => item.id === product.id);
+
+    if (index !== -1) {
+        selected.splice(index, 1);
+    } else {
+        if (selected.length >= 4) {
+            alert("Maksimum 4 ta mahsulot tanlash mumkin.");
+            return;
+        }
+
+        selected.push({ ...product });
+    }
+
+    persistComparisonSelection(selected);
+    updateCounts();
+    renderProducts();
+    updateCompare();
+};
+
+
+compareNavBtn.addEventListener(
+    "click",
+    () => {
+
+        compareSection.classList.add(
+            "active"
+        );
+
+        compareSection.scrollIntoView({
+            behavior: "smooth"
+        });
+
+        updateCompare();
+
+    }
+);
+
+
+compareBackBtn.addEventListener(
+    "click",
+    () => {
+
+        compareSection.classList.remove(
+            "active"
+        );
+
+        document
+            .getElementById("productsSection")
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+
+    }
+);
+
+
+compareGoProducts.addEventListener(
+    "click",
+    () => {
+
+        compareSection.classList.remove(
+            "active"
+        );
+
+        document
+            .getElementById("productsSection")
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+
+    }
+);
+
+
+clearComparison.addEventListener(
+    "click",
+    () => {
+        persistComparisonSelection([]);
+        updateCounts();
+        updateCompare();
+        renderProducts();
+    }
+);
+
+
+function normalizeComparisonSelection(items = []) {
+    const list = Array.isArray(items) ? items : [];
+    const normalized = [];
+    const seen = new Set();
+
+    for (const entry of list) {
+        let product = entry;
+
+        if (typeof entry === "string") {
+            product = state.products.find(item => item.id === entry) || null;
+        }
+
+        if (!product || !product.id) {
+            continue;
+        }
+
+        if (seen.has(product.id)) {
+            continue;
+        }
+
+        seen.add(product.id);
+        normalized.push({ ...product });
+
+        if (normalized.length >= 4) {
+            break;
+        }
+    }
+
+    return normalized;
+}
+
+function persistComparisonSelection(items = []) {
+    const normalized = normalizeComparisonSelection(items);
+    state.comparison = normalized;
+    localStorage.setItem(
+        COMPARE_STORAGE_KEY,
+        JSON.stringify(normalized)
+    );
+    return normalized;
+}
+
+function updateCompare() {
+    const products = normalizeComparisonSelection(state.comparison);
+
+    if (products.length < 2) {
+        compareEmpty.style.display = "block";
+        compareTableWrap.style.display = "none";
+        return;
+    }
+
+    compareEmpty.style.display = "none";
+    compareTableWrap.style.display = "block";
+
+    const productColumns = products.map(product => {
+        const url = getProductUrl(product);
+        const safeUrl = isValidProductUrl(url) ? url : "#";
+
+        return `
+            <th>
+                <div class="compare-product-header">
+                    ${getCompareImage(product)}
+                    <div class="compare-product-name-wrap">
+                        <strong>${escapeHtml(product.name || "Product")}</strong>
+                        <span>${escapeHtml(product.store || product.source || "Marketplace")}</span>
+                    </div>
                 </div>
-            `;
+            </th>
+        `;
+    }).join("");
 
-        }).join("");
+    compareTable.innerHTML = `
+        <tr>
+            <th>Field</th>
+            ${productColumns}
+        </tr>
+
+        <tr>
+            <td>Image</td>
+            ${products.map(product => `
+                <td class="compare-cell compare-image-cell">
+                    ${getCompareImage(product)}
+                </td>
+            `).join("")}
+        </tr>
+
+        <tr>
+            <td>${t("name")}</td>
+            ${products.map(product => `
+                <td class="compare-cell">
+                    ${escapeHtml(product.name || "-")}
+                </td>
+            `).join("")}
+        </tr>
+
+        <tr>
+            <td>${t("price")}</td>
+            ${products.map(product => `
+                <td class="compare-cell">
+                    <strong>${formatPrice(product.price)}</strong>
+                </td>
+            `).join("")}
+        </tr>
+
+        <tr>
+            <td>Currency</td>
+            ${products.map(product => `
+                <td class="compare-cell">
+                    ${escapeHtml(product.currency || state.currency || "UZS")}
+                </td>
+            `).join("")}
+        </tr>
+
+        <tr>
+            <td>${t("ratingLabel")}</td>
+            ${products.map(product => `
+                <td class="compare-cell">
+                    ${Number(product.rating || 0) ? `${"★".repeat(Math.round(Number(product.rating || 0)))} ${Number(product.rating || 0)}/5` : "-"}
+                </td>
+            `).join("")}
+        </tr>
+
+        <tr>
+            <td>${t("brand")}</td>
+            ${products.map(product => `
+                <td class="compare-cell">
+                    ${escapeHtml(product.brand || "-")}
+                </td>
+            `).join("")}
+        </tr>
+
+        <tr>
+            <td>${t("store")}</td>
+            ${products.map(product => `
+                <td class="compare-cell">
+                    ${escapeHtml(product.store || product.source || "-")}
+                </td>
+            `).join("")}
+        </tr>
+
+        <tr>
+            <td>${t("stock")}</td>
+            ${products.map(product => `
+                <td class="compare-cell">
+                    ${escapeHtml(product.stock || "Mavjud")}
+                </td>
+            `).join("")}
+        </tr>
+
+        <tr>
+            <td>Open product</td>
+            ${products.map(product => {
+                const url = getProductUrl(product);
+                const safeUrl = isValidProductUrl(url) ? url : "#";
+
+                return `
+                    <td class="compare-cell compare-action-cell">
+                        <a
+                            href="${escapeHtml(safeUrl)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="compare-open-btn"
+                            ${safeUrl === "#" ? "onclick=\"return false;\"" : ""}
+                        >
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            Open product
+                        </a>
+                    </td>
+                `;
+            }).join("")}
+        </tr>
+    `;
+
+}
 
 
-    container
-        .querySelectorAll(
-            "[data-remove-favorite]"
-        )
-        .forEach(button => {
+// ======================================================
+// STATS
+// ======================================================
+
+function updateStats() {
+
+    const products =
+        state.filteredProducts.length
+            ? state.filteredProducts
+            : state.products;
+
+
+    document.getElementById(
+        "count"
+    ).textContent =
+        products.length;
+
+
+    const sources =
+        new Set(
+            state.products.map(
+                p => p.source
+            )
+        );
+
+
+    document.getElementById(
+        "favTotal"
+    ).textContent =
+        sources.size;
+
+
+    const prices =
+        products
+            .map(
+                p => Number(p.price || 0)
+            )
+            .filter(
+                p => p > 0
+            );
+
+
+    if (prices.length) {
+
+        const average =
+            prices.reduce(
+                (a, b) => a + b,
+                0
+            ) / prices.length;
+
+
+        document.getElementById(
+            "avgPrice"
+        ).textContent =
+            formatPrice(average);
+
+    } else {
+
+        document.getElementById(
+            "avgPrice"
+        ).textContent =
+            "Narx mavjud emas";
+
+    }
+
+}
+
+
+function updateCounts() {
+
+    document
+        .querySelectorAll("#favCount")
+        .forEach(
+            element => {
+
+                element.textContent =
+                    state.favorites.length;
+
+            }
+        );
+
+
+    document.getElementById(
+        "compareCount"
+    ).textContent =
+        state.comparison.length;
+
+}
+
+
+// ======================================================
+// FILTERS
+// ======================================================
+
+sortSelect.addEventListener(
+    "change",
+    () => {
+
+        renderProducts();
+        updateStats();
+
+    }
+);
+
+
+let isSyncingPriceControls = false;
+
+
+priceRange.addEventListener(
+    "input",
+    () => {
+
+        if (isSyncingPriceControls) {
+            return;
+        }
+
+        isSyncingPriceControls = true;
+
+        const max =
+            Number(priceRange.max || 2000000);
+
+        const value =
+            Math.min(
+                Math.max(
+                    Number(priceRange.value || 0),
+                    0
+                ),
+                max
+            );
+
+        priceRange.value =
+            String(value);
+
+        priceInput.value =
+            formatPriceValue(value);
+
+        isSyncingPriceControls = false;
+
+        renderProducts();
+        updateStats();
+
+    }
+);
+
+
+priceInput.addEventListener(
+    "input",
+    () => {
+
+        if (isSyncingPriceControls) {
+            return;
+        }
+
+        const max =
+            Number(priceRange.max || 2000000);
+
+        const digits =
+            String(priceInput.value)
+                .replace(/\D/g, "");
+
+        let value =
+            digits ? Number(digits) : 0;
+
+        if (!Number.isFinite(value) || value < 0) {
+            value = 0;
+        }
+
+        if (max > 0 && value > max) {
+            value = max;
+        }
+
+        isSyncingPriceControls = true;
+
+        priceRange.value =
+            String(value);
+
+        priceInput.value =
+            formatPriceValue(value);
+
+        isSyncingPriceControls = false;
+
+        renderProducts();
+        updateStats();
+
+    }
+);
+
+
+function formatPriceValue(value) {
+
+    const numericValue =
+        Math.max(
+            0,
+            Math.round(Number(value || 0))
+        );
+
+    return new Intl.NumberFormat(
+        "ru-RU"
+    ).format(numericValue)
+        + " "
+        + currencySymbols[state.currency];
+
+}
+
+
+function updatePriceText() {
+
+    const max =
+        Number(
+            priceRange.max || 2000000
+        );
+
+    const value =
+        Math.min(
+            Math.max(
+                Number(priceRange.value || 0),
+                0
+            ),
+            max
+        );
+
+    if (Number(priceRange.value) > max) {
+        priceRange.value =
+            String(max);
+    }
+
+    if (priceRange) {
+        const percent =
+            max > 0
+                ? (value / max) * 100
+                : 0;
+
+        priceRange.style.setProperty(
+            "--value",
+            `${Math.min(100, Math.max(0, percent))}%`
+        );
+    }
+
+    if (priceInput && !isSyncingPriceControls) {
+        priceInput.value =
+            formatPriceValue(value);
+    }
+
+    if (priceDisplay) {
+        priceDisplay.textContent =
+            "≤";
+    }
+
+}
+
+
+clearFilters.addEventListener(
+    "click",
+    () => {
+
+        sortSelect.value =
+            "cheap";
+
+        if (priceRange.max) {
+            priceRange.value =
+                priceRange.max;
+        }
+
+        if (!priceRange.max || Number(priceRange.max) <= 0) {
+            priceRange.max =
+                2000000;
+            priceRange.value =
+                2000000;
+        }
+
+        updatePriceText();
+        renderProducts();
+        updateStats();
+
+    }
+);
+
+
+// ======================================================
+// CURRENCY
+// ======================================================
+
+currencySelect.addEventListener(
+    "change",
+    () => {
+
+        state.currency =
+            currencySelect.value;
+
+        localStorage.setItem(
+            "pricecompare_currency",
+            state.currency
+        );
+
+
+        if (state.products.length) {
+
+            const prices =
+                state.products
+                    .map(p => Number(p.price || 0))
+                    .filter(p => p > 0);
+
+
+            if (prices.length) {
+
+                const max =
+                    Math.ceil(
+                        Math.max(...prices) /
+                        100000
+                    ) * 100000;
+
+
+                priceRange.max =
+                    Math.max(
+                        convertFromUZS(max),
+                        2000000
+                    );
+
+                priceRange.value =
+                    priceRange.max;
+
+            } else {
+                priceRange.max =
+                    2000000;
+                priceRange.value =
+                    2000000;
+            }
+
+        } else {
+            priceRange.max =
+                2000000;
+            priceRange.value =
+                2000000;
+        }
+
+
+        updatePriceText();
+        renderProducts();
+        updateStats();
+        updateCompare();
+
+    }
+);
+
+
+// ======================================================
+// LANGUAGE
+// ======================================================
+
+languageSelect.addEventListener(
+    "change",
+    () => {
+
+        state.language =
+            languageSelect.value;
+
+        localStorage.setItem(
+            "pricecompare_language",
+            state.language
+        );
+
+        updateTranslations();
+
+    }
+);
+
+
+// ======================================================
+// THEME
+// ======================================================
+
+themeBtn.addEventListener(
+    "click",
+    event => {
+
+        event.stopPropagation();
+
+        themePanel.classList.toggle(
+            "active"
+        );
+
+    }
+);
+
+
+document
+    .querySelectorAll(".theme-option")
+    .forEach(
+        button => {
 
             button.addEventListener(
                 "click",
                 () => {
 
-                    const item =
-                        button.closest(
-                            ".favorite-item"
-                        );
+                    const theme =
+                        button.dataset.theme;
 
-                    const id =
-                        item?.dataset.id;
+                    state.theme =
+                        theme;
 
+                    document.body.dataset.theme =
+                        theme;
 
-                    favorites =
-                        favorites.filter(
-                            product =>
-                                String(product.id) !==
-                                String(id)
-                        );
-
-
-                    saveArray(
-                        STORAGE.favorites,
-                        favorites
+                    localStorage.setItem(
+                        "pricecompare_theme",
+                        theme
                     );
 
-
-                    updateFavoriteCounts();
-
-                    renderFavorites();
-
-                    renderProducts();
+                    themePanel.classList.remove(
+                        "active"
+                    );
 
                 }
             );
 
-        });
-}
-
-
-/* =========================================================
-   COMPARISON
-========================================================= */
-
-function toggleComparison(product) {
-
-    const id =
-        String(product.id);
-
-
-    const index =
-        comparison.findIndex(
-            item =>
-                String(item.id) === id
-        );
-
-
-    if (index >= 0) {
-
-        comparison.splice(index, 1);
-
-    } else {
-
-        if (comparison.length >= 4) {
-
-            alert(
-                currentLanguage === "ru"
-                    ? "Можно сравнить максимум 4 товара."
-                    : currentLanguage === "en"
-                        ? "You can compare up to 4 products."
-                        : "Maksimal 4 ta mahsulotni solishtirish mumkin."
-            );
-
-            return;
         }
-
-
-        comparison.push(product);
-    }
-
-
-    saveArray(
-        STORAGE.comparison,
-        comparison
     );
 
 
-    updateCompareCount();
-
-    renderProducts();
-
-    renderComparison();
-}
-
-
-/* =========================================================
-   COMPARE COUNT
-========================================================= */
-
-function updateCompareCount() {
-
-    const element =
-        $("#compareCount");
-
-    if (element) {
-        element.textContent =
-            comparison.length;
-    }
-}
-
-
-/* =========================================================
-   COMPARISON
-========================================================= */
-
-function renderComparison() {
-
-    const empty =
-        $("#compareEmpty");
-
-    const wrap =
-        $("#compareTableWrap");
-
-    const table =
-        $("#compareTable");
-
-
-    if (!empty || !wrap || !table) {
-        return;
-    }
-
-
-    if (comparison.length < 2) {
-
-        empty.style.display = "block";
-
-        wrap.style.display = "none";
-
-        return;
-    }
-
-
-    empty.style.display = "none";
-
-    wrap.style.display = "block";
-
-
-    const rows = [
-        {
-            key: "name",
-            label: t("name"),
-            value: p =>
-                p.name || "—"
-        },
-        {
-            key: "brand",
-            label: t("brand"),
-            value: p =>
-                p.brand || "—"
-        },
-        {
-            key: "price",
-            label: t("price"),
-            value: p =>
-                formatPrice(
-                    getProductPrice(p)
-                )
-        },
-        {
-            key: "rating",
-            label: t("ratingLabel"),
-            value: p =>
-                p.rating
-                    ? `⭐ ${p.rating}`
-                    : "—"
-        },
-        {
-            key: "stock",
-            label: t("stock"),
-            value: p =>
-                p.stock || "—"
-        },
-        {
-            key: "store",
-            label: t("store"),
-            value: p =>
-                p.store ||
-                p.source ||
-                "—"
-        }
-    ];
-
-
-    table.innerHTML = `
-
-        <thead>
-
-            <tr>
-
-                <th></th>
-
-                ${comparison.map(product => `
-                    <th>
-                        ${escapeHtml(product.name || "")}
-                    </th>
-                `).join("")}
-
-            </tr>
-
-        </thead>
-
-
-        <tbody>
-
-            ${rows.map(row => `
-
-                <tr>
-
-                    <th>
-                        ${row.label}
-                    </th>
-
-                    ${comparison.map(product => `
-                        <td>
-                            ${escapeHtml(
-                                String(
-                                    row.value(product)
-                                )
-                            )}
-                        </td>
-                    `).join("")}
-
-                </tr>
-
-            `).join("")}
-
-        </tbody>
-    `;
-}
-
-
-/* =========================================================
-   SEARCH
-========================================================= */
-
-async function searchProducts() {
-
-    const input =
-        $("#search");
-
-
-    if (!input) return;
-
-
-    const query =
-        input.value.trim();
-
-
-    if (!query) {
-
-        allProducts = [];
-
-        renderProducts();
-
-        return;
-    }
-
-
-    const container =
-        $("#products");
-
-
-    container.innerHTML = `
-        <div class="loading-message">
-
-            <i class="fa-solid fa-spinner fa-spin"></i>
-
-            <p>${t("loading")}</p>
-
-        </div>
-    `;
-
-
-    try {
-
-        const response =
-            await fetch(
-                `/api/search?query=${encodeURIComponent(query)}`
-            );
-
-
-        if (!response.ok) {
-            throw new Error(
-                `HTTP ${response.status}`
-            );
-        }
-
-
-        const data =
-            await response.json();
-
-
-        let products = [];
-
+document.addEventListener(
+    "click",
+    event => {
 
         if (
-            Array.isArray(data.products)
+            !themePanel.contains(event.target) &&
+            event.target !== themeBtn
         ) {
 
-            products =
-                data.products;
-
-        } else if (
-            Array.isArray(data.data)
-        ) {
-
-            products =
-                data.data;
-
-        } else if (
-            Array.isArray(data.results)
-        ) {
-
-            products =
-                data.results;
+            themePanel.classList.remove(
+                "active"
+            );
 
         }
 
-
-        allProducts =
-            products.map(
-                normalizeProduct
-            );
-
-
-        renderProducts();
-
-    } catch (error) {
-
-        console.error(
-            "Search error:",
-            error
-        );
-
-
-        container.innerHTML = `
-            <div class="error-message">
-
-                <i class="fa-solid fa-triangle-exclamation"></i>
-
-                <p>${t("error")}</p>
-
-            </div>
-        `;
-
     }
-}
+);
 
 
-/* =========================================================
-   NORMALIZE PRODUCT
-========================================================= */
-
-function normalizeProduct(product, index) {
-
-    return {
-
-        ...product,
-
-        id:
-            product.id ??
-            product.productId ??
-            `product-${index}`,
-
-        name:
-            product.name ??
-            product.title ??
-            "Product",
-
-        price:
-            product.price ??
-            null,
-
-        rating:
-            product.rating ??
-            0,
-
-        brand:
-            product.brand ??
-            "",
-
-        store:
-            product.store ??
-            product.source ??
-            "",
-
-        source:
-            product.source ??
-            product.store ??
-            "",
-
-        image:
-            product.image ??
-            product.imageUrl ??
-            product.thumbnail ??
-            "",
-
-        url:
-            product.url ??
-            product.productUrl ??
-            "#",
-
-        productUrl:
-            product.productUrl ??
-            product.url ??
-            "#"
-
-    };
-}
-
-
-/* =========================================================
-   STATS
-========================================================= */
-
-function updateStats() {
-
-    const list =
-        getFilteredProducts();
-
-
-    const count =
-        $("#count");
-
-    if (count) {
-        count.textContent =
-            list.length;
-    }
-
-
-    const sourceCount =
-        $("#sourceCount");
-
-
-    const sources =
-        new Set(
-            list
-                .map(
-                    p =>
-                        p.source ||
-                        p.store
-                )
-                .filter(Boolean)
-        );
-
-
-    if (sourceCount) {
-        sourceCount.textContent =
-            sources.size;
-    }
-
-
-    const prices =
-        list
-            .map(
-                getProductPrice
-            )
-            .filter(
-                price =>
-                    price !== null
-            );
-
-
-    const avg =
-        $("#avgPrice");
-
-
-    if (!avg) return;
-
-
-    if (!prices.length) {
-
-        avg.textContent =
-            t("priceUnavailable");
-
-        return;
-    }
-
-
-    const average =
-        prices.reduce(
-            (sum, price) =>
-                sum + price,
-            0
-        ) / prices.length;
-
-
-    avg.textContent =
-        formatPrice(average);
-}
-
-
-/* =========================================================
-   CLEAR FILTERS
-========================================================= */
-
-function clearFilters() {
-
-    const range =
-        $("#priceRange");
-
-    const sort =
-        $("#sort");
-
-    if (range) {
-
-        range.value =
-            range.max;
-
-    }
-
-
-    if (sort) {
-
-        sort.value =
-            "cheap";
-
-    }
-
-
-    updatePriceDisplay();
-
-    renderProducts();
-}
-
-
-/* =========================================================
-   ESCAPE
-========================================================= */
+// ======================================================
+// ESCAPE HTML
+// ======================================================
 
 function escapeHtml(value) {
 
@@ -2399,797 +2154,22 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+
 }
 
 
-function escapeAttr(value) {
+function escapeJs(value) {
 
-    return escapeHtml(value);
+    return String(value ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'");
+
 }
 
 
-/* =========================================================
-   MODALS
-========================================================= */
-
-function openModal(element) {
-
-    if (element) {
-        element.classList.add("active");
-    }
-}
-
-
-function closeModal(element) {
-
-    if (element) {
-        element.classList.remove("active");
-    }
-}
-
-
-/* =========================================================
-   EVENT LISTENERS
-========================================================= */
-
-function setupEvents() {
-
-    /* LANGUAGE */
-
-    const languageSelect =
-        $("#languageSelect");
-
-    if (languageSelect) {
-
-        languageSelect.addEventListener(
-            "change",
-            event => {
-
-                applyLanguage(
-                    event.target.value
-                );
-
-            }
-        );
-
-    }
-
-
-    /* THEME BUTTON */
-
-    const themeBtn =
-        $("#themeBtn");
-
-    const themePanel =
-        $("#themePanel");
-
-
-    if (themeBtn && themePanel) {
-
-        themeBtn.addEventListener(
-            "click",
-            event => {
-
-                event.stopPropagation();
-
-                themePanel.classList.toggle(
-                    "active"
-                );
-
-            }
-        );
-
-    }
-
-
-    /* QUICK THEMES */
-
-    $all(
-        ".theme-option[data-theme]"
-    ).forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                applyTheme(
-                    button.dataset.theme
-                );
-
-                if (themePanel) {
-                    themePanel.classList.remove(
-                        "active"
-                    );
-                }
-
-            }
-        );
-
-    });
-
-
-    /* ALL THEMES */
-
-    const openAll =
-        $("#openAllThemesBtn");
-
-
-    if (openAll) {
-
-        openAll.addEventListener(
-            "click",
-            () => {
-
-                openModal(
-                    $("#settingsModal")
-                );
-
-                if (themePanel) {
-                    themePanel.classList.remove(
-                        "active"
-                    );
-                }
-
-            }
-        );
-
-    }
-
-
-    /* MAIN THEME */
-
-    const mainThemeBtn =
-        $("#mainThemeBtn");
-
-
-    const mainDropdown =
-        $("#mainThemeDropdown");
-
-
-    if (
-        mainThemeBtn &&
-        mainDropdown
-    ) {
-
-        mainThemeBtn.addEventListener(
-            "click",
-            event => {
-
-                event.stopPropagation();
-
-                mainDropdown.classList.toggle(
-                    "active"
-                );
-
-            }
-        );
-
-    }
-
-
-    /* SETTINGS */
-
-    const settingsBtn =
-        $("#settingsBtn");
-
-
-    if (settingsBtn) {
-
-        settingsBtn.addEventListener(
-            "click",
-            () => {
-
-                openModal(
-                    $("#settingsModal")
-                );
-
-            }
-        );
-
-    }
-
-
-    /* CLOSE SETTINGS */
-
-    const closeSettings =
-        $("#closeSettingsModal");
-
-
-    if (closeSettings) {
-
-        closeSettings.addEventListener(
-            "click",
-            () => {
-
-                closeModal(
-                    $("#settingsModal")
-                );
-
-            }
-        );
-
-    }
-
-
-    /* CURRENCY */
-
-    const mainCurrency =
-        $("#mainCurrencySelect");
-
-
-    if (mainCurrency) {
-
-        mainCurrency.value =
-            currentCurrency;
-
-
-        mainCurrency.addEventListener(
-            "change",
-            event => {
-
-                currentCurrency =
-                    event.target.value;
-
-
-                localStorage.setItem(
-                    STORAGE.currency,
-                    currentCurrency
-                );
-
-
-                renderSettingsCurrency();
-
-                updatePriceDisplay();
-
-                renderProducts();
-
-                renderFavorites();
-
-                renderComparison();
-
-                updateStats();
-
-            }
-        );
-
-    }
-
-
-    /* SHOW THEME WIDGET */
-
-    const toggleTheme =
-        $("#toggleThemeWidget");
-
-
-    if (toggleTheme) {
-
-        toggleTheme.addEventListener(
-            "click",
-            () => {
-
-                showThemes =
-                    !showThemes;
-
-
-                localStorage.setItem(
-                    STORAGE.showThemes,
-                    String(showThemes)
-                );
-
-
-                updateMainControls();
-
-            }
-        );
-
-    }
-
-
-    /* SHOW CURRENCY */
-
-    const toggleCurrency =
-        $("#toggleHomepageCurrency");
-
-
-    if (toggleCurrency) {
-
-        toggleCurrency.addEventListener(
-            "click",
-            () => {
-
-                showCurrency =
-                    !showCurrency;
-
-
-                localStorage.setItem(
-                    STORAGE.showCurrency,
-                    String(showCurrency)
-                );
-
-
-                updateMainControls();
-
-            }
-        );
-
-    }
-
-
-    /* SEARCH */
-
-    const searchButton =
-        $("#searchButton");
-
-
-    if (searchButton) {
-
-        searchButton.addEventListener(
-            "click",
-            searchProducts
-        );
-
-    }
-
-
-    const searchInput =
-        $("#search");
-
-
-    if (searchInput) {
-
-        searchInput.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key === "Enter"
-                ) {
-
-                    searchProducts();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* SORT */
-
-    const sort =
-        $("#sort");
-
-
-    if (sort) {
-
-        sort.addEventListener(
-            "change",
-            renderProducts
-        );
-
-    }
-
-
-    /* PRICE RANGE */
-
-    const range =
-        $("#priceRange");
-
-
-    if (range) {
-
-        range.addEventListener(
-            "input",
-            () => {
-
-                updatePriceDisplay();
-
-                renderProducts();
-
-            }
-        );
-
-    }
-
-
-    /* PRICE INPUT */
-
-    const priceInput =
-        $("#priceInput");
-
-
-    if (priceInput) {
-
-        priceInput.addEventListener(
-            "change",
-            () => {
-
-                const value =
-                    Number(
-                        priceInput.value
-                            .replace(/[^\d]/g, "")
-                    );
-
-
-                if (
-                    Number.isFinite(value)
-                ) {
-
-                    const range =
-                        $("#priceRange");
-
-
-                    const max =
-                        Number(range.max);
-
-
-                    const finalValue =
-                        Math.min(
-                            Math.max(
-                                value,
-                                0
-                            ),
-                            max
-                        );
-
-
-                    range.value =
-                        finalValue;
-
-
-                    updatePriceDisplay();
-
-                    renderProducts();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* CLEAR FILTERS */
-
-    const clear =
-        $("#clearFilters");
-
-
-    if (clear) {
-
-        clear.addEventListener(
-            "click",
-            clearFilters
-        );
-
-    }
-
-
-    /* FAVORITES */
-
-    const favoritesButton =
-        $("#favoritesBtn");
-
-
-    if (favoritesButton) {
-
-        favoritesButton.addEventListener(
-            "click",
-            () => {
-
-                renderFavorites();
-
-                openModal(
-                    $("#favoritesModal")
-                );
-
-            }
-        );
-
-    }
-
-
-    /* CLOSE FAVORITES */
-
-    const closeFavorites =
-        $("#closeModal");
-
-
-    if (closeFavorites) {
-
-        closeFavorites.addEventListener(
-            "click",
-            () => {
-
-                closeModal(
-                    $("#favoritesModal")
-                );
-
-            }
-        );
-
-    }
-
-
-    /* COMPARE */
-
-    const compareNav =
-        $("#compareNavBtn");
-
-
-    if (compareNav) {
-
-        compareNav.addEventListener(
-            "click",
-            () => {
-
-                showComparison();
-
-            }
-        );
-
-    }
-
-
-    /* BACK */
-
-    const compareBack =
-        $("#compareBackBtn");
-
-
-    if (compareBack) {
-
-        compareBack.addEventListener(
-            "click",
-            () => {
-
-                hideComparison();
-
-            }
-        );
-
-    }
-
-
-    /* GO PRODUCTS */
-
-    const compareGo =
-        $("#compareGoProducts");
-
-
-    if (compareGo) {
-
-        compareGo.addEventListener(
-            "click",
-            hideComparison
-        );
-
-    }
-
-
-    /* CLEAR COMPARISON */
-
-    const clearComparison =
-        $("#clearComparison");
-
-
-    if (clearComparison) {
-
-        clearComparison.addEventListener(
-            "click",
-            () => {
-
-                comparison = [];
-
-                saveArray(
-                    STORAGE.comparison,
-                    comparison
-                );
-
-                updateCompareCount();
-
-                renderComparison();
-
-                renderProducts();
-
-            }
-        );
-
-    }
-
-
-    /* CLOSE MODALS BY BACKDROP */
-
-    $all(".modal").forEach(modal => {
-
-        modal.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target === modal
-                ) {
-
-                    closeModal(modal);
-
-                }
-
-            }
-        );
-
-    });
-
-
-    /* ESC */
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (event.key === "Escape") {
-
-                $all(".modal.active")
-                    .forEach(
-                        modal =>
-                            closeModal(modal)
-                    );
-
-
-                if (themePanel) {
-                    themePanel.classList.remove(
-                        "active"
-                    );
-                }
-
-
-                if (mainDropdown) {
-                    mainDropdown.classList.remove(
-                        "active"
-                    );
-                }
-
-            }
-
-        }
-    );
-
-
-    /* DOCUMENT CLICK */
-
-    document.addEventListener(
-        "click",
-        event => {
-
-            if (
-                themePanel &&
-                !themePanel.contains(event.target) &&
-                !themeBtn?.contains(event.target)
-            ) {
-
-                themePanel.classList.remove(
-                    "active"
-                );
-
-            }
-
-
-            if (
-                mainDropdown &&
-                !mainDropdown.contains(event.target) &&
-                !mainThemeBtn?.contains(event.target)
-            ) {
-
-                mainDropdown.classList.remove(
-                    "active"
-                );
-
-            }
-
-        }
-    );
-}
-
-
-/* =========================================================
-   SHOW / HIDE COMPARISON
-========================================================= */
-
-function showComparison() {
-
-    $("#productsSection").style.display =
-        "none";
-
-    $(".filters").style.display =
-        "none";
-
-    $(".stats").style.display =
-        "none";
-
-    $(".hero").style.display =
-        "none";
-
-    $("#compareSection").classList.add(
-        "active"
-    );
-
-    renderComparison();
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}
-
-
-function hideComparison() {
-
-    $("#productsSection").style.display =
-        "";
-
-    $(".filters").style.display =
-        "";
-
-    $(".stats").style.display =
-        "";
-
-    $(".hero").style.display =
-        "";
-
-    $("#compareSection").classList.remove(
-        "active"
-    );
-
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}
-
-
-/* =========================================================
-   INIT
-========================================================= */
-
-function init() {
-
-    applyTheme(currentTheme);
-
-    applyLanguage(currentLanguage);
-
-    renderSettingsCurrency();
-
-    renderSettingsLanguage();
-
-    renderThemeOptions();
-
-    renderMainThemeDropdown();
-
-    updateMainControls();
-
-    updatePriceDisplay();
-
-    updateFavoriteCounts();
-
-    updateCompareCount();
-
-    renderFavorites();
-
-    renderComparison();
-
-    setupEvents();
-
-    console.log(
-        "PriceCompare initialized successfully"
-    );
-}
-
-
-/* =========================================================
-   START
-========================================================= */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    init
-);
+// ======================================================
+// AUTO UPDATE
+// ======================================================
+
+updatePriceText();
+updateCounts();
