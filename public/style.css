@@ -619,19 +619,19 @@ button {
     border-radius: var(--radius);
 }
 
-#compareTable {
+.compare-table-wrap table {
     width: 100%;
     border-collapse: collapse;
 }
 
-#compareTable th,
-#compareTable td {
+.compare-table-wrap th,
+.compare-table-wrap td {
     padding: 15px;
     border-bottom: 1px solid var(--border);
     text-align: left;
 }
 
-#compareTable th {
+.compare-table-wrap th {
     background: var(--card2);
 }
 
@@ -658,7 +658,8 @@ button {
     margin-bottom: 20px;
 }
 
-.compare-empty button {
+.compare-empty button,
+.compare-empty .button {
     border: 0;
     background: var(--primary);
     color: white;
@@ -840,9 +841,6 @@ button {
     .product-image {
         height: 220px;
     }
-<<<<<<< HEAD
-}
-=======
 }
 /* =====================================================
    PRICECOMPARE FINAL HOMEPAGE CONTROLS
@@ -1095,4 +1093,3 @@ body[data-theme="matrix"] {
     --primary2: #16cc4f;
     --border: #0e3a17;
 }
->>>>>>> 33cde1a (PriceCompare)
