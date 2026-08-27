@@ -840,9 +840,6 @@ button {
     .product-image {
         height: 220px;
     }
-<<<<<<< HEAD
-}
-=======
 }
 /* =====================================================
    PRICECOMPARE FINAL HOMEPAGE CONTROLS
@@ -1095,4 +1092,3 @@ body[data-theme="matrix"] {
     --primary2: #16cc4f;
     --border: #0e3a17;
 }
->>>>>>> 33cde1a (PriceCompare)

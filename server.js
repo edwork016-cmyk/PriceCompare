@@ -1,13 +1,25 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+<<<<<<< HEAD
+=======
+console.log(
+    "PARSE_API_KEY:",
+    process.env.PARSE_API_KEY ? "FOUND" : "NOT FOUND"
+);
+
+// =====================================================
+// CONFIG
+// =====================================================
+
+>>>>>>> 33cde1a (PriceCompare)
 const PARSE_API_KEY = process.env.PARSE_API_KEY || "";
+
 const PARSE_API_URL = "https://api.parse.bot/scraper";
 
 const UZUM_SCRAPER_ID =
@@ -16,6 +28,7 @@ const UZUM_SCRAPER_ID =
 const YANDEX_SCRAPER_ID =
     "bf0d8525-2102-46d1-84e3-0fd50aed24c3";
 
+<<<<<<< HEAD
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -34,15 +47,45 @@ function isQuotaError(status, data) {
     );
 }
 
+=======
+
+// =====================================================
+// MIDDLEWARE
+// =====================================================
+
+app.use(cors());
+app.use(express.json());
+
+app.use(
+    express.static(
+        path.join(__dirname, "public")
+    )
+);
+
+
+// =====================================================
+// PARSE API
+// =====================================================
+
+>>>>>>> 33cde1a (PriceCompare)
 async function parseApiFetch(url) {
+
     if (!PARSE_API_KEY) {
+<<<<<<< HEAD
         const error = new Error("PARSE_API_KEY is not configured.");
         error.code = "PARSE_NOT_CONFIGURED";
         throw error;
+=======
+        throw new Error(
+            "PARSE_API_KEY topilmadi. .env faylni tekshiring."
+        );
+>>>>>>> 33cde1a (PriceCompare)
     }
 
-    let response;
+    const response = await fetch(url, {
+        method: "GET",
 
+<<<<<<< HEAD
     try {
         response = await fetch(url, {
             method: "GET",
@@ -59,10 +102,22 @@ async function parseApiFetch(url) {
 
     const text = await response.text();
     let data = {};
+=======
+        headers: {
+            "X-API-Key": PARSE_API_KEY,
+            "Accept": "application/json"
+        }
+    });
+
+    const text = await response.text();
+
+    let data;
+>>>>>>> 33cde1a (PriceCompare)
 
     try {
-        data = text ? JSON.parse(text) : {};
+        data = JSON.parse(text);
     } catch {
+<<<<<<< HEAD
         const error = new Error(
             `Parse API returned invalid JSON. HTTP ${response.status}`
         );
@@ -77,13 +132,46 @@ async function parseApiFetch(url) {
                 data?.error?.message ||
                 data?.error ||
                 `Parse API request failed: ${response.status}`
+=======
+        throw new Error(
+            `Parse API JSON qaytarmadi. HTTP ${response.status}`
+        );
+    }
+
+    if (!response.ok) {
+
+        console.error(
+            "PARSE API ERROR:",
+            data
         );
 
-        if (isQuotaError(response.status, data)) {
+        const rateLimitError =
+            response.status === 429 ||
+            response.status === 402 ||
+            data?.error?.error?.toLowerCase().includes("usage limit") ||
+            data?.error?.message?.toLowerCase().includes("usage limit") ||
+            data?.error?.error?.toLowerCase().includes("rate limit") ||
+            data?.error?.message?.toLowerCase().includes("rate limit") ||
+            data?.error?.error?.toLowerCase().includes("quota") ||
+            data?.error?.message?.toLowerCase().includes("quota") ||
+            data?.error?.error?.toLowerCase().includes("credit") ||
+            data?.error?.message?.toLowerCase().includes("credit") ||
+            data?.message?.toLowerCase().includes("usage limit") ||
+            data?.message?.toLowerCase().includes("rate limit") ||
+            data?.message?.toLowerCase().includes("quota") ||
+            data?.message?.toLowerCase().includes("credit");
+
+        const error = new Error(
+            data.message ||
+            data.detail ||
+            data.error ||
+            `Parse API xatosi: ${response.status}`
+>>>>>>> 33cde1a (PriceCompare)
+        );
+
+        if (rateLimitError) {
             error.code = "API_QUOTA_EXCEEDED";
             error.isQuotaError = true;
-        } else {
-            error.code = "API_UNAVAILABLE";
         }
 
         throw error;
@@ -92,16 +180,45 @@ async function parseApiFetch(url) {
     return data;
 }
 
+<<<<<<< HEAD
 function extractProducts(data) {
     const candidates = [
+=======
+
+// =====================================================
+// UNIVERSAL ARRAY EXTRACTOR
+// =====================================================
+
+function extractProducts(data) {
+
+    const possibleArrays = [
+
+>>>>>>> 33cde1a (PriceCompare)
         data?.items,
+
         data?.products,
+<<<<<<< HEAD
+=======
+
+>>>>>>> 33cde1a (PriceCompare)
         data?.data?.items,
+
         data?.data?.products,
+<<<<<<< HEAD
+=======
+
+>>>>>>> 33cde1a (PriceCompare)
         data?.payload?.items,
+
         data?.payload?.products,
+<<<<<<< HEAD
+=======
+
+>>>>>>> 33cde1a (PriceCompare)
         data?.payload?.data?.items,
+
         data?.payload?.data?.products,
+<<<<<<< HEAD
         data?.payload?.data?.makeSearch?.products,
         data?.payload?.makeSearch?.products,
         data?.data?.makeSearch?.products,
@@ -110,14 +227,31 @@ function extractProducts(data) {
     ];
 
     for (const value of candidates) {
+=======
+
+        data?.payload?.data?.makeSearch?.products,
+
+        data?.payload?.makeSearch?.products,
+
+        data?.data?.makeSearch?.products,
+
+        data?.data?.payload
+
+    ];
+
+    for (const value of possibleArrays) {
+
+>>>>>>> 33cde1a (PriceCompare)
         if (Array.isArray(value)) {
             return value;
         }
+
     }
 
     return [];
 }
 
+<<<<<<< HEAD
 const FALLBACK_PRODUCTS = [
     {
         id: "uzum-1",
@@ -295,9 +429,34 @@ function normalizePrice(value) {
             raw.price ??
             raw.minPrice ??
             raw.min_price ??
-            0;
+=======
+
+// =====================================================
+// PRICE NORMALIZER
+// =====================================================
+
+function normalizePrice(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+        return 0;
     }
 
+    if (typeof value === "object") {
+
+        value =
+            value.value ??
+            value.amount ??
+            value.price ??
+>>>>>>> 33cde1a (PriceCompare)
+            0;
+
+    }
+
+<<<<<<< HEAD
     if (raw === null || raw === undefined || raw === "") {
         return 0;
     }
@@ -333,18 +492,41 @@ function normalizePrice(value) {
     }
 
     const price = Number(normalized);
+=======
+    let price =
+        Number(
+            String(value)
+                .replace(/[^\d.,]/g, "")
+                .replace(",", ".")
+        );
+>>>>>>> 33cde1a (PriceCompare)
 
     if (!Number.isFinite(price)) {
         return 0;
     }
 
+<<<<<<< HEAD
     if (price >= 100000000) {
         return Math.round(price / 100);
+=======
+    /*
+        Uzum ayrim response'larda narxni tiyin
+        ko'rinishida qaytarishi mumkin.
+
+        Faqat juda katta qiymatlarni tiyin
+        deb hisoblaymiz.
+    */
+
+    if (price >= 100000000) {
+        price =
+            Math.round(price / 100);
+>>>>>>> 33cde1a (PriceCompare)
     }
 
     return Math.round(price);
 }
 
+<<<<<<< HEAD
 function normalizeImage(item) {
     if (!item || typeof item !== "object") {
         return "";
@@ -354,6 +536,27 @@ function normalizeImage(item) {
         ...(Array.isArray(item.photos) ? item.photos : []),
         ...(Array.isArray(item.photoLinks) ? item.photoLinks : []),
         ...(Array.isArray(item.photo_links) ? item.photo_links : [])
+=======
+
+// =====================================================
+// IMAGE NORMALIZER
+// =====================================================
+
+function normalizeImage(item) {
+
+    const photos = [
+        ...(Array.isArray(item.photos)
+            ? item.photos
+            : []),
+
+        ...(Array.isArray(item.photoLinks)
+            ? item.photoLinks
+            : []),
+
+        ...(Array.isArray(item.photo_links)
+            ? item.photo_links
+            : [])
+>>>>>>> 33cde1a (PriceCompare)
     ];
 
     return (
@@ -364,18 +567,29 @@ function normalizeImage(item) {
         item.photoUrl ||
         item.photo_link ||
         item.picture ||
+<<<<<<< HEAD
         photoCandidates[0] ||
+=======
+        photos[0] ||
+>>>>>>> 33cde1a (PriceCompare)
         ""
     );
 }
 
+<<<<<<< HEAD
 function isValidProductUrl(value, market = "") {
+=======
+
+function isValidProductUrl(value) {
+
+>>>>>>> 33cde1a (PriceCompare)
     if (!value || typeof value !== "string") {
         return false;
     }
 
     const cleaned = value.trim();
 
+<<<<<<< HEAD
     if (
         !cleaned ||
         cleaned === "#" ||
@@ -472,12 +686,57 @@ function getMarketplaceSearchUrl(storeName, productName) {
     }
 
     if (normalized.includes("yandex")) {
+=======
+    if (!cleaned) return false;
+    if (cleaned === "#") return false;
+    if (cleaned === "null") return false;
+    if (cleaned === "undefined") return false;
+    if (cleaned.startsWith("javascript:")) return false;
+
+    try {
+
+        const parsed = new URL(cleaned);
+
+        return (
+            parsed.protocol === "http:" ||
+            parsed.protocol === "https:"
+        );
+
+    } catch {
+        return false;
+    }
+
+}
+
+
+function getMarketplaceSearchUrl(storeName, productName) {
+
+    const name =
+        String(
+            productName || ""
+        ).trim();
+
+    const query =
+        encodeURIComponent(name || "product");
+
+    const normalizedStore =
+        String(storeName || "")
+            .toLowerCase();
+
+    if (normalizedStore.includes("uzum")) {
+        return `https://uzum.uz/ru/search?query=${query}`;
+    }
+
+    if (normalizedStore.includes("yandex")) {
+>>>>>>> 33cde1a (PriceCompare)
         return `https://market.yandex.uz/search?text=${query}`;
     }
 
     return `https://www.google.com/search?q=${query}`;
+
 }
 
+<<<<<<< HEAD
 async function searchUzum(query) {
     const url = new URL(`${PARSE_API_URL}/${UZUM_SCRAPER_ID}/search_products`);
     url.searchParams.set("query", query);
@@ -486,6 +745,40 @@ async function searchUzum(query) {
 
     const data = await parseApiFetch(url.toString());
     const items = extractProducts(data);
+=======
+
+// =====================================================
+// UZUM MARKET
+// =====================================================
+
+async function searchUzum(query) {
+
+    const url = new URL(
+        `${PARSE_API_URL}/${UZUM_SCRAPER_ID}/search_products`
+    );
+
+    url.searchParams.set(
+        "query",
+        query
+    );
+
+    url.searchParams.set(
+        "limit",
+        "24"
+    );
+
+    url.searchParams.set(
+        "offset",
+        "0"
+    );
+
+
+    const data =
+        await parseApiFetch(
+            url.toString()
+        );
+
+>>>>>>> 33cde1a (PriceCompare)
 
     return items.map((item, index) => {
         const productId =
@@ -494,6 +787,7 @@ async function searchUzum(query) {
             item?.id ||
             index;
 
+<<<<<<< HEAD
         const productName =
             item?.title ||
             item?.name ||
@@ -551,6 +845,152 @@ async function searchYandex(query) {
 
     const data = await parseApiFetch(url.toString());
     const items = extractProducts(data);
+=======
+
+    console.log(
+        `Uzum: ${items.length} ta mahsulot`
+    );
+
+
+    return items.map(
+        (item, index) => {
+
+            const productId =
+                item.productId ||
+                item.product_id ||
+                item.id ||
+                index;
+
+
+            const productName =
+                item.title ||
+                item.name ||
+                item.productName ||
+                "Noma'lum mahsulot";
+
+            const directProductUrl =
+                isValidProductUrl(
+                    item.url ||
+                    item.link ||
+                    item.productUrl ||
+                    item.product_url
+                )
+                    ? (
+                        item.url ||
+                        item.link ||
+                        item.productUrl ||
+                        item.product_url
+                    )
+                    : null;
+
+            return {
+
+                id:
+                    `uzum-${productId}`,
+
+                name:
+                    productName,
+
+                price:
+                    normalizePrice(
+                        item.minSellPrice ??
+                        item.min_sell_price ??
+                        item.sellPrice ??
+                        item.price
+                    ),
+
+                currency:
+                    "UZS",
+
+                rating:
+                    Number(
+                        item.rating ||
+                        item.ratingValue ||
+                        0
+                    ),
+
+                image:
+                    normalizeImage(item),
+
+                brand:
+                    item.brand ||
+                    item.brandName ||
+                    item.seller?.title ||
+                    "Uzum Market",
+
+                category:
+                    item.category?.title ||
+                    item.category ||
+                    "Marketplace",
+
+                stock:
+                    item.availableAmount ??
+                    item.available_amount ??
+                    item.stock ??
+                    "Mavjud",
+
+                store:
+                    "Uzum Market",
+
+                url:
+                    directProductUrl ||
+                    getMarketplaceSearchUrl(
+                        "Uzum Market",
+                        productName
+                    ),
+
+                productUrl:
+                    directProductUrl,
+
+                barcode:
+                    item.barcode ||
+                    item.barCode ||
+                    "",
+
+                source:
+                    "uzum"
+
+            };
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// YANDEX MARKET
+// =====================================================
+
+async function searchYandex(query) {
+
+    const url = new URL(
+        `${PARSE_API_URL}/${YANDEX_SCRAPER_ID}/search_products`
+    );
+
+
+    url.searchParams.set(
+        "query",
+        query
+    );
+
+    url.searchParams.set(
+        "page",
+        "1"
+    );
+
+    url.searchParams.set(
+        "sort",
+        "dpop"
+    );
+
+
+    const data =
+        await parseApiFetch(
+            url.toString()
+        );
+
+>>>>>>> 33cde1a (PriceCompare)
 
     return items.slice(0, 24).map((item, index) => {
         const productId =
@@ -563,6 +1003,7 @@ async function searchYandex(query) {
             item?.id ||
             index;
 
+<<<<<<< HEAD
         const productName =
             item?.title ||
             item?.name ||
@@ -638,11 +1079,225 @@ app.get("/api/status", (req, res) => {
                 configured: Boolean(PARSE_API_KEY),
                 scraperId: YANDEX_SCRAPER_ID,
                 marketplace: "market.yandex.uz"
-            }
-        }
-    });
-});
+=======
 
+    console.log(
+        `Yandex Market: ${items.length} ta mahsulot`
+    );
+
+
+    return items
+        .slice(0, 24)
+        .map(
+            (item, index) => {
+
+                const productId =
+                    item.ware_id ||
+                    item.wareId ||
+                    item.product_id ||
+                    item.productId ||
+                    item.sku_id ||
+                    item.skuId ||
+                    item.id ||
+                    index;
+
+
+                const title =
+                    item.title ||
+                    item.name ||
+                    item.productName ||
+                    "Noma'lum mahsulot";
+
+
+                const directUrl =
+                    isValidProductUrl(
+                        item.url ||
+                        item.product_url ||
+                        item.productUrl ||
+                        item.itemWebUrl
+                    )
+                        ? (
+                            item.url ||
+                            item.product_url ||
+                            item.productUrl ||
+                            item.itemWebUrl
+                        )
+                        : null;
+
+
+                return {
+
+                    id:
+                        `yandex-${productId}`,
+
+                    name:
+                        title,
+
+                    price:
+                        normalizePrice(
+                            item.price ??
+                            item.minPrice ??
+                            item.salePrice
+                        ),
+
+                    currency:
+                        item.currency ||
+                        "UZS",
+
+                    rating:
+                        Number(
+                            item.rating ||
+                            item.ratingValue ||
+                            0
+                        ),
+
+                    image:
+                        normalizeImage(item),
+
+                    brand:
+                        item.vendor ||
+                        item.vendor_name ||
+                        item.brand ||
+                        "Yandex Market",
+
+                    category:
+                        item.category ||
+                        item.category_name ||
+                        "Marketplace",
+
+                    stock:
+                        item.delivery_text ||
+                        item.deliveryText ||
+                        item.availabilityStatus ||
+                        "Mavjud",
+
+                    store:
+                        "Yandex Market UZ",
+
+                    url:
+                        directUrl ||
+                        getMarketplaceSearchUrl(
+                            "Yandex Market",
+                            title
+                        ),
+
+                    productUrl:
+                        directUrl,
+
+                    barcode:
+                        item.barcode ||
+                        "",
+
+                    oldPrice:
+                        normalizePrice(
+                            item.old_price ??
+                            item.oldPrice
+                        ),
+
+                    discount:
+                        Number(
+                            item.discount_percent ||
+                            item.discountPercent ||
+                            0
+                        ),
+
+                    source:
+                        "yandex"
+
+                };
+
+            }
+        );
+
+}
+
+
+// =====================================================
+// STATUS
+// =====================================================
+
+app.get(
+    "/api/status",
+    (req, res) => {
+
+        res.json({
+
+            success:
+                true,
+
+            status:
+                "online",
+
+            message:
+                "PriceCompare API ishlayapti",
+
+            sources: {
+
+                uzum: {
+
+                    configured:
+                        Boolean(
+                            PARSE_API_KEY
+                        ),
+
+                    scraperId:
+                        UZUM_SCRAPER_ID
+
+                },
+
+                yandexMarket: {
+
+                    configured:
+                        Boolean(
+                            PARSE_API_KEY
+                        ),
+
+                    scraperId:
+                        YANDEX_SCRAPER_ID,
+
+                    marketplace:
+                        "market.yandex.uz"
+
+                }
+
+>>>>>>> 33cde1a (PriceCompare)
+            }
+
+        });
+
+    }
+);
+
+
+// =====================================================
+// SEARCH
+// =====================================================
+
+app.get(
+    "/api/search",
+    async (req, res) => {
+
+        const query =
+            String(
+                req.query.q || ""
+            ).trim();
+
+
+        if (!query) {
+
+            return res.status(400).json({
+
+                success:
+                    false,
+
+                message:
+                    "Qidiruv so'rovini kiriting"
+
+            });
+
+        }
+
+<<<<<<< HEAD
 app.get("/api/search", async (req, res) => {
     const query = String(req.query.q || "").trim();
 
@@ -677,9 +1332,183 @@ app.get("/api/search", async (req, res) => {
             },
             products: fallbackProducts,
             message: "Showing local demo products. Add PARSE_API_KEY to enable live marketplace results."
-        });
-    }
+=======
 
+        if (!PARSE_API_KEY) {
+
+            return res.status(500).json({
+
+                success:
+                    false,
+
+                message:
+                    "PARSE_API_KEY topilmadi. .env faylni tekshiring."
+
+            });
+
+        }
+
+
+        console.log("");
+        console.log(
+            `🔎 Qidiruv: ${query}`
+        );
+
+
+        let results;
+
+        try {
+            results =
+                await Promise.allSettled([
+
+                    searchUzum(query),
+
+                    searchYandex(query)
+
+                ]);
+        } catch (error) {
+            const isQuota =
+                error?.code === "API_QUOTA_EXCEEDED" ||
+                error?.isQuotaError;
+
+            if (isQuota) {
+                return res.status(429).json({
+                    success: false,
+                    error: "API_QUOTA_EXCEEDED",
+                    message: "Product provider API quota has been exceeded. Please try again later."
+                });
+            }
+
+            return res.status(502).json({
+                success: false,
+                error: "API_UNAVAILABLE",
+                message: "Product provider is temporarily unavailable. Please try again later."
+            });
+        }
+
+
+        let uzumProducts = [];
+        let yandexProducts = [];
+        let quotaExceeded = false;
+        let apiUnavailable = false;
+
+
+        // =================================================
+        // UZUM RESULT
+        // =================================================
+
+        if (
+            results[0].status === "fulfilled"
+        ) {
+
+            uzumProducts =
+                results[0].value;
+
+        } else {
+
+            console.error(
+                "❌ UZUM ERROR:",
+                results[0].reason?.message
+            );
+
+            const reason = results[0].reason;
+
+            if (reason?.isQuotaError || reason?.code === "API_QUOTA_EXCEEDED") {
+                quotaExceeded = true;
+            } else if (reason instanceof Error) {
+                apiUnavailable = true;
+            }
+
+        }
+
+
+        // =================================================
+        // YANDEX RESULT
+        // =================================================
+
+        if (
+            results[1].status === "fulfilled"
+        ) {
+
+            yandexProducts =
+                results[1].value;
+
+        } else {
+
+            console.error(
+                "❌ YANDEX ERROR:",
+                results[1].reason?.message
+            );
+
+            const reason = results[1].reason;
+
+            if (reason?.isQuotaError || reason?.code === "API_QUOTA_EXCEEDED") {
+                quotaExceeded = true;
+            } else if (reason instanceof Error) {
+                apiUnavailable = true;
+            }
+
+        }
+
+
+        const products = [
+
+            ...uzumProducts,
+
+            ...yandexProducts
+
+        ];
+
+        if (
+            quotaExceeded ||
+            (!products.length && (apiUnavailable || results.some(result => result.status === "rejected")))
+        ) {
+            const shouldQuota = quotaExceeded || results.some(result => result.status === "rejected" && (result.reason?.isQuotaError || result.reason?.code === "API_QUOTA_EXCEEDED"));
+
+            return res.status(shouldQuota ? 429 : 503).json({
+                success: false,
+                error: shouldQuota ? "API_QUOTA_EXCEEDED" : "API_UNAVAILABLE",
+                message: shouldQuota
+                    ? "Product provider API quota has been exceeded. Please try again later."
+                    : "Product data service is temporarily unavailable. Please try again later."
+            });
+        }
+
+
+        console.log(
+            `✅ Jami: ${products.length}`
+        );
+
+
+        res.json({
+
+            success:
+                true,
+
+            query,
+
+            count:
+                products.length,
+
+            sources: {
+
+                uzum:
+                    uzumProducts.length,
+
+                yandexMarket:
+                    yandexProducts.length
+
+            },
+
+            products
+
+>>>>>>> 33cde1a (PriceCompare)
+        });
+
+    }
+);
+
+<<<<<<< HEAD
     const results = await Promise.allSettled([
         searchUzum(query),
         searchYandex(query)
@@ -750,6 +1579,74 @@ if (require.main === module) {
         console.log("==========================================");
         console.log("");
     });
+=======
+
+// =====================================================
+// HOME
+// =====================================================
+
+app.get(
+    "/",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                "public",
+                "index.html"
+            )
+        );
+
+    }
+);
+
+
+// =====================================================
+// START
+// =====================================================
+
+if (
+    require.main === module
+) {
+
+    app.listen(
+        PORT,
+        () => {
+
+            console.log("");
+            console.log(
+                "=========================================="
+            );
+
+            console.log(
+                `🚀 PriceCompare: http://localhost:${PORT}`
+            );
+
+            console.log(
+                "🛒 Source 1: Uzum Market"
+            );
+
+            console.log(
+                "🛒 Source 2: Yandex Market Uzbekistan"
+            );
+
+            console.log(
+                PARSE_API_KEY
+                    ? "🔑 Parse API: CONFIGURED"
+                    : "❌ Parse API: NOT CONFIGURED"
+            );
+
+            console.log(
+                "=========================================="
+            );
+
+            console.log("");
+
+        }
+    );
+
+>>>>>>> 33cde1a (PriceCompare)
 }
+
 
 module.exports = app;

@@ -2,6 +2,7 @@
   "name": "pricecompare",
   "version": "1.0.0",
   "private": true,
+<<<<<<< HEAD
   "description": "PriceCompare marketplace comparison app",
   "main": "server.js",
   "scripts": {
@@ -18,9 +19,15 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+=======
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+>>>>>>> 33cde1a (PriceCompare)
   "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
   }
 }
