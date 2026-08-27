@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PriceCompare — mahsulotlarni taqqoslash.">
+  <title>PriceCompare — Compare</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="light">
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo"><i class="fa-solid fa-tags"></i><span>PriceCompare</span></a>
+      <div class="header-actions">
+        <select id="compareLanguage" aria-label="Language">
+          <option value="uz">O'zbekcha</option>
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+        </select>
+        <button id="compareThemeBtn" class="icon-btn" type="button" title="Theme"><i class="fa-solid fa-palette"></i></button>
+        <a href="/" class="icon-btn" title="Home" style="display:flex;align-items:center;justify-content:center;text-decoration:none"><i class="fa-solid fa-house"></i></a>
+      </div>
+    </div>
+    <div id="compareThemePanel" class="theme-panel"></div>
+  </header>
+
+  <main class="compare-section active" style="display:block">
+    <div class="container">
+      <div class="compare-header">
+        <div>
+          <h2 id="comparePageTitle">Mahsulotlarni taqqoslash</h2>
+          <p id="comparePageSubtitle">4 tagacha mahsulot tanlab, xususiyatlarini solishtiring</p>
+        </div>
+        <button id="compareClear" type="button"><i class="fa-solid fa-trash"></i> <span id="compareClearText">Tozalash</span></button>
+      </div>
+      <div id="comparePageEmpty" class="compare-empty">
+        <i class="fa-solid fa-code-compare"></i>
+        <h3 id="compareEmptyTitle">Hali mahsulot tanlanmagan</h3>
+        <p id="compareEmptyText">Taqqoslash uchun kamida 2 ta mahsulot qo'shing.</p>
+        <a href="/" class="compare-empty button" style="display:inline-block;text-decoration:none">Mahsulotlarni ko'rish</a>
+      </div>
+      <div id="comparePageTableWrap" class="compare-table-wrap" style="display:none">
+        <table id="comparePageTable"></table>
+      </div>
+    </div>
+  </main>
+
+  <script src="compare.js"></script>
+</body>
+</html>
