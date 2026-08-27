@@ -3,36 +3,15 @@
 // Uzum Market + Yandex Market
 // ======================================================
 
-<<<<<<< HEAD
-const COMPARE_STORAGE_KEY = "pricecompare_comparison";
-
-=======
->>>>>>> 33cde1a (PriceCompare)
 const state = {
     products: [],
     filteredProducts: [],
     favorites: JSON.parse(
         localStorage.getItem("pricecompare_favorites") || "[]"
     ),
-<<<<<<< HEAD
-    comparison: (() => {
-        try {
-            const raw = JSON.parse(
-                localStorage.getItem(COMPARE_STORAGE_KEY) || "[]"
-            );
-
-            return Array.isArray(raw)
-                ? raw.filter(Boolean)
-                : [];
-        } catch {
-            return [];
-        }
-    })(),
-=======
     comparison: JSON.parse(
         localStorage.getItem("pricecompare_comparison") || "[]"
     ),
->>>>>>> 33cde1a (PriceCompare)
     language:
         localStorage.getItem("pricecompare_language") || "uz",
     currency:
@@ -45,82 +24,6 @@ const state = {
 // ======================================================
 // ELEMENTS
 // ======================================================
-<<<<<<< HEAD
-
-const searchInput =
-    document.getElementById("search");
-
-const searchButton =
-    document.getElementById("searchButton");
-
-const productsContainer =
-    document.getElementById("products");
-
-const sortSelect =
-    document.getElementById("sort");
-
-const priceRange =
-    document.getElementById("priceRange");
-
-const priceInput =
-    document.getElementById("priceInput");
-
-const priceDisplay =
-    document.getElementById("priceDisplay");
-
-const clearFilters =
-    document.getElementById("clearFilters");
-
-const languageSelect =
-    document.getElementById("languageSelect");
-
-const currencySelect =
-    document.getElementById("currencySelect");
-
-const themeBtn =
-    document.getElementById("themeBtn");
-
-const themePanel =
-    document.getElementById("themePanel");
-
-const favoritesBtn =
-    document.getElementById("favoritesBtn");
-
-const favoritesModal =
-    document.getElementById("favoritesModal");
-
-const closeModal =
-    document.getElementById("closeModal");
-
-const favoritesList =
-    document.getElementById("favoritesList");
-
-const compareNavBtn =
-    document.getElementById("compareNavBtn");
-
-const compareSection =
-    document.getElementById("compareSection");
-
-const compareBackBtn =
-    document.getElementById("compareBackBtn");
-
-const clearComparison =
-    document.getElementById("clearComparison");
-
-const compareTable =
-    document.getElementById("compareTable");
-
-const compareEmpty =
-    document.getElementById("compareEmpty");
-
-const compareTableWrap =
-    document.getElementById("compareTableWrap");
-
-const compareGoProducts =
-    document.getElementById("compareGoProducts");
-
-
-=======
 
 const searchInput =
     document.getElementById("search");
@@ -213,7 +116,6 @@ const compareGoProducts =
     document.getElementById("compareGoProducts");
 
 
->>>>>>> 33cde1a (PriceCompare)
 // ======================================================
 // CURRENCY
 // ======================================================
@@ -342,12 +244,8 @@ const translations = {
             "Holati",
 
         store:
-<<<<<<< HEAD
-            "Do'kon"
-=======
             "Do'kon",
         settingsTitle: "Sozlamalar", settingsCurrency: "Valyuta", settingsLanguage: "Til", settingsThemes: "Mavzular", settingsHomepage: "Bosh sahifa boshqaruvi", showHomepageThemes: "Bosh sahifada mavzularni ko‘rsatish", showHomepageCurrency: "Bosh sahifada valyuta boshqaruvini ko‘rsatish", showHomepageCompare: "Bosh sahifada taqqoslash tugmasini ko‘rsatish", showHomepageFavorites: "Bosh sahifada saralanganlar tugmasini ko‘rsatish"
->>>>>>> 33cde1a (PriceCompare)
     },
 
     ru: {
@@ -451,12 +349,8 @@ const translations = {
             "Наличие",
 
         store:
-<<<<<<< HEAD
-            "Магазин"
-=======
             "Магазин",
         settingsTitle: "Настройки", settingsCurrency: "Валюта", settingsLanguage: "Язык", settingsThemes: "Темы", settingsHomepage: "Управление главной страницей", showHomepageThemes: "Показывать темы на главной", showHomepageCurrency: "Показывать валюту на главной", showHomepageCompare: "Показывать сравнение на главной", showHomepageFavorites: "Показывать избранное на главной"
->>>>>>> 33cde1a (PriceCompare)
     },
 
     en: {
@@ -560,42 +454,13 @@ const translations = {
             "Stock",
 
         store:
-<<<<<<< HEAD
-            "Store"
-=======
             "Store",
         settingsTitle: "Settings", settingsCurrency: "Currency", settingsLanguage: "Language", settingsThemes: "Themes", settingsHomepage: "Homepage controls", showHomepageThemes: "Show themes on homepage", showHomepageCurrency: "Show currency on homepage", showHomepageCompare: "Show compare on homepage", showHomepageFavorites: "Show favorites on homepage"
->>>>>>> 33cde1a (PriceCompare)
     }
 };
 
 
 // ======================================================
-<<<<<<< HEAD
-// INIT
-// ======================================================
-
-function init() {
-
-    document.body.dataset.theme =
-        state.theme;
-
-    languageSelect.value =
-        state.language;
-
-    currencySelect.value =
-        state.currency;
-
-    updateTranslations();
-    updateCounts();
-    updateCompare();
-
-}
-
-init();
-
-
-=======
 // THEME + HOMEPAGE SETTINGS
 // ======================================================
 
@@ -797,7 +662,6 @@ function init() {
 init();
 
 
->>>>>>> 33cde1a (PriceCompare)
 // ======================================================
 // TRANSLATION
 // ======================================================
@@ -865,12 +729,9 @@ function updateTranslations() {
     document.getElementById("favoritesTitle").textContent =
         t("favoritesTitle");
 
-<<<<<<< HEAD
-=======
     updateSettingsTranslations();
     renderThemePanel();
 
->>>>>>> 33cde1a (PriceCompare)
     if (state.products.length) {
         renderProducts();
     }
@@ -1099,28 +960,6 @@ async function searchProducts() {
                 data.message || "API error"
             );
         }
-<<<<<<< HEAD
-
-
-        state.products =
-            Array.isArray(data.products)
-                ? data.products
-                : [];
-
-
-        state.filteredProducts =
-            [...state.products];
-
-
-        // Maximum price filterni avtomatik moslaymiz
-
-        const prices =
-            state.products
-                .map(p => Number(p.price || 0))
-                .filter(p => p > 0);
-
-
-=======
 
 
         state.products =
@@ -1146,7 +985,6 @@ async function searchProducts() {
                 .filter(p => p > 0);
 
 
->>>>>>> 33cde1a (PriceCompare)
         if (prices.length) {
 
             const max =
@@ -1215,7 +1053,6 @@ function getImageUrl(product) {
 
     if (!product.image) {
         return "";
-<<<<<<< HEAD
     }
 
 
@@ -1272,64 +1109,6 @@ function formatPrice(
     }
 
 
-=======
-    }
-
-
-    if (typeof product.image === "string") {
-        return product.image;
-    }
-
-
-    if (product.image.link) {
-
-        return (
-            product.image.link.high ||
-            product.image.link.low ||
-            ""
-        );
-
-    }
-
-
-    return "";
-
-}
-
-
-// ======================================================
-// PRICE
-// ======================================================
-
-function convertFromUZS(
-    uzs
-) {
-
-    const rate =
-        currencyRates[state.currency] ||
-        1;
-
-    return uzs * rate;
-
-}
-
-
-function formatPrice(
-    uzs
-) {
-
-    const value =
-        convertFromUZS(
-            Number(uzs || 0)
-        );
-
-
-    if (!value) {
-        return "Narx mavjud emas";
-    }
-
-
->>>>>>> 33cde1a (PriceCompare)
     const locales = {
         UZS: "uz-UZ",
         USD: "en-US",
@@ -1386,16 +1165,10 @@ function isValidProductUrl(url) {
 
 
 function getProductUrl(product) {
-<<<<<<< HEAD
-    const candidates = [
-        product?.productUrl,
-        product?.url
-=======
 
     const candidates = [
         product?.url,
         product?.productUrl
->>>>>>> 33cde1a (PriceCompare)
     ];
 
     for (const candidate of candidates) {
@@ -1403,8 +1176,6 @@ function getProductUrl(product) {
             return candidate.trim();
         }
     }
-<<<<<<< HEAD
-=======
 
     const productName =
         String(
@@ -1434,61 +1205,6 @@ function getProductUrl(product) {
     return `https://www.google.com/search?q=${query}`;
 
 }
->>>>>>> 33cde1a (PriceCompare)
-
-    const productName =
-        String(
-            product?.name ||
-            product?.title ||
-            "product"
-        ).trim();
-
-<<<<<<< HEAD
-    const source =
-        String(
-            product?.source ||
-            product?.store ||
-            ""
-        ).toLowerCase();
-
-    const query =
-        encodeURIComponent(productName || "product");
-
-    if (source.includes("uzum")) {
-        return `https://uzum.uz/ru/search?query=${query}`;
-    }
-
-    if (source.includes("yandex")) {
-        return `https://market.yandex.uz/search?text=${query}`;
-    }
-
-    return `https://www.google.com/search?q=${query}`;
-}
-
-function getCompareImage(product) {
-    const image = getImageUrl(product);
-
-    if (!image) {
-        return `
-            <div class="compare-image empty">
-                <i class="fa-solid fa-image"></i>
-            </div>
-        `;
-    }
-
-    return `
-        <img
-            src="${escapeHtml(image)}"
-            alt="${escapeHtml(product.name || "Product")}" 
-            loading="lazy"
-            onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='flex');"
-        >
-        <div class="compare-image fallback" style="display:none;">
-            <i class="fa-solid fa-image"></i>
-        </div>
-    `;
-}
-
 
 // ======================================================
 // PRODUCTS RENDER
@@ -1504,22 +1220,6 @@ function renderProducts() {
         Number(priceRange.value || Infinity);
 
 
-=======
-// ======================================================
-// PRODUCTS RENDER
-// ======================================================
-
-function renderProducts() {
-
-    let products =
-        [...state.products];
-
-
-    const maxPrice =
-        Number(priceRange.value || Infinity);
-
-
->>>>>>> 33cde1a (PriceCompare)
     products =
         products.filter(product => {
 
@@ -1611,15 +1311,9 @@ function productCard(product) {
 
 
     const compared =
-<<<<<<< HEAD
-        normalizeComparisonSelection(
-            state.comparison
-        ).some(item => item.id === product.id);
-=======
         state.comparison.includes(
             product.id
         );
->>>>>>> 33cde1a (PriceCompare)
 
 
     const rating =
@@ -1895,745 +1589,19 @@ function renderFavorites() {
 
                     </div>
                 `;
-<<<<<<< HEAD
 
             }
         ).join("");
 
 }
-=======
->>>>>>> 33cde1a (PriceCompare)
-
-            }
-        ).join("");
-
-<<<<<<< HEAD
-=======
-}
 
 
->>>>>>> 33cde1a (PriceCompare)
 // ======================================================
 // COMPARE
 // ======================================================
 
 window.toggleCompare =
 function(id) {
-<<<<<<< HEAD
-    const normalizedSelection = normalizeComparisonSelection(state.comparison);
-    const product =
-        state.products.find(
-            item => item.id === id
-        ) ||
-        normalizedSelection.find(
-            item => item.id === id
-        );
-
-    if (!product) {
-        return;
-    }
-
-    const selected = [...normalizedSelection];
-    const index = selected.findIndex(item => item.id === product.id);
-
-    if (index !== -1) {
-        selected.splice(index, 1);
-    } else {
-        if (selected.length >= 4) {
-            alert("Maksimum 4 ta mahsulot tanlash mumkin.");
-            return;
-        }
-
-        selected.push({ ...product });
-    }
-
-    persistComparisonSelection(selected);
-    updateCounts();
-    renderProducts();
-    updateCompare();
-};
-
-
-compareNavBtn.addEventListener(
-    "click",
-    () => {
-
-        compareSection.classList.add(
-            "active"
-        );
-
-        compareSection.scrollIntoView({
-            behavior: "smooth"
-        });
-
-        updateCompare();
-
-    }
-);
-
-
-compareBackBtn.addEventListener(
-    "click",
-    () => {
-
-        compareSection.classList.remove(
-            "active"
-        );
-
-        document
-            .getElementById("productsSection")
-            .scrollIntoView({
-                behavior: "smooth"
-            });
-
-    }
-);
-
-
-compareGoProducts.addEventListener(
-    "click",
-    () => {
-
-        compareSection.classList.remove(
-            "active"
-        );
-
-        document
-            .getElementById("productsSection")
-            .scrollIntoView({
-                behavior: "smooth"
-            });
-
-    }
-);
-
-
-clearComparison.addEventListener(
-    "click",
-    () => {
-        persistComparisonSelection([]);
-        updateCounts();
-        updateCompare();
-        renderProducts();
-    }
-);
-
-
-function normalizeComparisonSelection(items = []) {
-    const list = Array.isArray(items) ? items : [];
-    const normalized = [];
-    const seen = new Set();
-
-    for (const entry of list) {
-        let product = entry;
-
-        if (typeof entry === "string") {
-            product = state.products.find(item => item.id === entry) || null;
-        }
-
-        if (!product || !product.id) {
-            continue;
-        }
-
-        if (seen.has(product.id)) {
-            continue;
-        }
-
-        seen.add(product.id);
-        normalized.push({ ...product });
-
-        if (normalized.length >= 4) {
-            break;
-        }
-    }
-
-    return normalized;
-}
-
-function persistComparisonSelection(items = []) {
-    const normalized = normalizeComparisonSelection(items);
-    state.comparison = normalized;
-    localStorage.setItem(
-        COMPARE_STORAGE_KEY,
-        JSON.stringify(normalized)
-    );
-    return normalized;
-}
-
-function updateCompare() {
-    const products = normalizeComparisonSelection(state.comparison);
-
-    if (products.length < 2) {
-        compareEmpty.style.display = "block";
-        compareTableWrap.style.display = "none";
-        return;
-    }
-
-    compareEmpty.style.display = "none";
-    compareTableWrap.style.display = "block";
-
-    const productColumns = products.map(product => {
-        const url = getProductUrl(product);
-        const safeUrl = isValidProductUrl(url) ? url : "#";
-
-        return `
-            <th>
-                <div class="compare-product-header">
-                    ${getCompareImage(product)}
-                    <div class="compare-product-name-wrap">
-                        <strong>${escapeHtml(product.name || "Product")}</strong>
-                        <span>${escapeHtml(product.store || product.source || "Marketplace")}</span>
-                    </div>
-                </div>
-            </th>
-        `;
-    }).join("");
-
-    compareTable.innerHTML = `
-        <tr>
-            <th>Field</th>
-            ${productColumns}
-        </tr>
-
-        <tr>
-            <td>Image</td>
-            ${products.map(product => `
-                <td class="compare-cell compare-image-cell">
-                    ${getCompareImage(product)}
-                </td>
-            `).join("")}
-        </tr>
-
-        <tr>
-            <td>${t("name")}</td>
-            ${products.map(product => `
-                <td class="compare-cell">
-                    ${escapeHtml(product.name || "-")}
-                </td>
-            `).join("")}
-        </tr>
-
-        <tr>
-            <td>${t("price")}</td>
-            ${products.map(product => `
-                <td class="compare-cell">
-                    <strong>${formatPrice(product.price)}</strong>
-                </td>
-            `).join("")}
-        </tr>
-
-        <tr>
-            <td>Currency</td>
-            ${products.map(product => `
-                <td class="compare-cell">
-                    ${escapeHtml(product.currency || state.currency || "UZS")}
-                </td>
-            `).join("")}
-        </tr>
-
-        <tr>
-            <td>${t("ratingLabel")}</td>
-            ${products.map(product => `
-                <td class="compare-cell">
-                    ${Number(product.rating || 0) ? `${"★".repeat(Math.round(Number(product.rating || 0)))} ${Number(product.rating || 0)}/5` : "-"}
-                </td>
-            `).join("")}
-        </tr>
-
-        <tr>
-            <td>${t("brand")}</td>
-            ${products.map(product => `
-                <td class="compare-cell">
-                    ${escapeHtml(product.brand || "-")}
-                </td>
-            `).join("")}
-        </tr>
-
-        <tr>
-            <td>${t("store")}</td>
-            ${products.map(product => `
-                <td class="compare-cell">
-                    ${escapeHtml(product.store || product.source || "-")}
-                </td>
-            `).join("")}
-        </tr>
-
-        <tr>
-            <td>${t("stock")}</td>
-            ${products.map(product => `
-                <td class="compare-cell">
-                    ${escapeHtml(product.stock || "Mavjud")}
-                </td>
-            `).join("")}
-        </tr>
-
-        <tr>
-            <td>Open product</td>
-            ${products.map(product => {
-                const url = getProductUrl(product);
-                const safeUrl = isValidProductUrl(url) ? url : "#";
-
-                return `
-                    <td class="compare-cell compare-action-cell">
-                        <a
-                            href="${escapeHtml(safeUrl)}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="compare-open-btn"
-                            ${safeUrl === "#" ? "onclick=\"return false;\"" : ""}
-                        >
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                            Open product
-                        </a>
-                    </td>
-                `;
-            }).join("")}
-        </tr>
-    `;
-
-}
-
-
-// ======================================================
-// STATS
-// ======================================================
-
-function updateStats() {
-
-    const products =
-        state.filteredProducts.length
-            ? state.filteredProducts
-            : state.products;
-
-
-    document.getElementById(
-        "count"
-    ).textContent =
-        products.length;
-
-
-    const sources =
-        new Set(
-            state.products.map(
-                p => p.source
-            )
-        );
-
-
-    document.getElementById(
-        "favTotal"
-    ).textContent =
-        sources.size;
-
-
-    const prices =
-        products
-            .map(
-                p => Number(p.price || 0)
-            )
-            .filter(
-                p => p > 0
-            );
-
-
-    if (prices.length) {
-
-        const average =
-            prices.reduce(
-                (a, b) => a + b,
-                0
-            ) / prices.length;
-
-
-        document.getElementById(
-            "avgPrice"
-        ).textContent =
-            formatPrice(average);
-
-    } else {
-
-        document.getElementById(
-            "avgPrice"
-        ).textContent =
-            "Narx mavjud emas";
-
-    }
-
-}
-
-
-function updateCounts() {
-
-    document
-        .querySelectorAll("#favCount")
-        .forEach(
-            element => {
-
-                element.textContent =
-                    state.favorites.length;
-
-            }
-        );
-
-
-    document.getElementById(
-        "compareCount"
-    ).textContent =
-        state.comparison.length;
-
-}
-
-
-// ======================================================
-// FILTERS
-// ======================================================
-
-sortSelect.addEventListener(
-    "change",
-    () => {
-
-        renderProducts();
-        updateStats();
-
-    }
-);
-
-
-let isSyncingPriceControls = false;
-
-
-priceRange.addEventListener(
-    "input",
-    () => {
-
-        if (isSyncingPriceControls) {
-            return;
-        }
-
-        isSyncingPriceControls = true;
-
-        const max =
-            Number(priceRange.max || 2000000);
-
-        const value =
-            Math.min(
-                Math.max(
-                    Number(priceRange.value || 0),
-                    0
-                ),
-                max
-            );
-
-        priceRange.value =
-            String(value);
-
-        priceInput.value =
-            formatPriceValue(value);
-
-        isSyncingPriceControls = false;
-
-        renderProducts();
-        updateStats();
-
-    }
-);
-
-
-priceInput.addEventListener(
-    "input",
-    () => {
-
-        if (isSyncingPriceControls) {
-            return;
-        }
-
-        const max =
-            Number(priceRange.max || 2000000);
-
-        const digits =
-            String(priceInput.value)
-                .replace(/\D/g, "");
-
-        let value =
-            digits ? Number(digits) : 0;
-
-        if (!Number.isFinite(value) || value < 0) {
-            value = 0;
-        }
-
-        if (max > 0 && value > max) {
-            value = max;
-        }
-
-        isSyncingPriceControls = true;
-
-        priceRange.value =
-            String(value);
-
-        priceInput.value =
-            formatPriceValue(value);
-
-        isSyncingPriceControls = false;
-
-        renderProducts();
-        updateStats();
-
-    }
-);
-
-
-function formatPriceValue(value) {
-
-    const numericValue =
-        Math.max(
-            0,
-            Math.round(Number(value || 0))
-        );
-
-    return new Intl.NumberFormat(
-        "ru-RU"
-    ).format(numericValue)
-        + " "
-        + currencySymbols[state.currency];
-
-}
-
-
-function updatePriceText() {
-
-    const max =
-        Number(
-            priceRange.max || 2000000
-        );
-
-    const value =
-        Math.min(
-            Math.max(
-                Number(priceRange.value || 0),
-                0
-            ),
-            max
-        );
-
-    if (Number(priceRange.value) > max) {
-        priceRange.value =
-            String(max);
-    }
-
-    if (priceRange) {
-        const percent =
-            max > 0
-                ? (value / max) * 100
-                : 0;
-
-        priceRange.style.setProperty(
-            "--value",
-            `${Math.min(100, Math.max(0, percent))}%`
-        );
-    }
-
-    if (priceInput && !isSyncingPriceControls) {
-        priceInput.value =
-            formatPriceValue(value);
-    }
-
-    if (priceDisplay) {
-        priceDisplay.textContent =
-            "≤";
-    }
-
-}
-
-
-clearFilters.addEventListener(
-    "click",
-    () => {
-
-        sortSelect.value =
-            "cheap";
-
-        if (priceRange.max) {
-            priceRange.value =
-                priceRange.max;
-        }
-
-        if (!priceRange.max || Number(priceRange.max) <= 0) {
-            priceRange.max =
-                2000000;
-            priceRange.value =
-                2000000;
-        }
-
-        updatePriceText();
-        renderProducts();
-        updateStats();
-
-    }
-);
-
-
-// ======================================================
-// CURRENCY
-// ======================================================
-
-currencySelect.addEventListener(
-    "change",
-    () => {
-
-        state.currency =
-            currencySelect.value;
-
-        localStorage.setItem(
-            "pricecompare_currency",
-            state.currency
-        );
-
-
-        if (state.products.length) {
-
-            const prices =
-                state.products
-                    .map(p => Number(p.price || 0))
-                    .filter(p => p > 0);
-
-
-            if (prices.length) {
-
-                const max =
-                    Math.ceil(
-                        Math.max(...prices) /
-                        100000
-                    ) * 100000;
-
-
-                priceRange.max =
-                    Math.max(
-                        convertFromUZS(max),
-                        2000000
-                    );
-
-                priceRange.value =
-                    priceRange.max;
-
-            } else {
-                priceRange.max =
-                    2000000;
-                priceRange.value =
-                    2000000;
-            }
-
-        } else {
-            priceRange.max =
-                2000000;
-            priceRange.value =
-                2000000;
-        }
-
-
-        updatePriceText();
-        renderProducts();
-        updateStats();
-        updateCompare();
-
-    }
-);
-
-
-// ======================================================
-// LANGUAGE
-// ======================================================
-
-languageSelect.addEventListener(
-    "change",
-    () => {
-
-        state.language =
-            languageSelect.value;
-
-        localStorage.setItem(
-            "pricecompare_language",
-            state.language
-        );
-
-        updateTranslations();
-
-    }
-);
-
-
-// ======================================================
-// THEME
-// ======================================================
-
-themeBtn.addEventListener(
-    "click",
-    event => {
-
-        event.stopPropagation();
-
-        themePanel.classList.toggle(
-            "active"
-        );
-
-    }
-);
-
-
-document
-    .querySelectorAll(".theme-option")
-    .forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const theme =
-                        button.dataset.theme;
-
-                    state.theme =
-                        theme;
-
-                    document.body.dataset.theme =
-                        theme;
-
-                    localStorage.setItem(
-                        "pricecompare_theme",
-                        theme
-                    );
-
-                    themePanel.classList.remove(
-                        "active"
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-document.addEventListener(
-    "click",
-    event => {
-
-        if (
-            !themePanel.contains(event.target) &&
-            event.target !== themeBtn
-        ) {
-
-            themePanel.classList.remove(
-                "active"
-            );
-
-        }
-
-    }
-);
-
-
-// ======================================================
-=======
 
     const index =
         state.comparison.indexOf(id);
@@ -3225,7 +2193,6 @@ document.addEventListener("click", event => {
 });
 
 // ======================================================
->>>>>>> 33cde1a (PriceCompare)
 // ESCAPE HTML
 // ======================================================
 
