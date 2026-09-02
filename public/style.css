@@ -1333,3 +1333,255 @@ body[data-theme="matrix"] {
     font-size: 13px;
   }
 }
+/* =========================
+   RESPONSIVE / MOBILE FIX
+========================= */
+
+/* Prevent horizontal scrolling */
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 900px) {
+
+    .products-grid,
+    .product-grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        padding: 0 16px;
+        box-sizing: border-box;
+    }
+
+    .product-card {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .product-card img {
+        width: 100%;
+        height: 180px;
+        object-fit: contain;
+        display: block;
+    }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+    /* Products */
+    .products-grid,
+    .product-grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 0 16px;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    /* Product card */
+    .product-card {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        height: auto;
+        min-height: 180px;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    /* Product image */
+    .product-card img {
+        width: 100%;
+        max-width: 100%;
+        height: 180px;
+        object-fit: contain;
+        display: block;
+    }
+
+    /* Product information */
+    .product-card .product-info {
+        width: 100%;
+        max-width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+        overflow-wrap: break-word;
+    }
+
+    /* =========================
+       SEARCH
+    ========================= */
+
+    .search-container,
+    .search-box {
+        width: calc(100% - 32px);
+        max-width: 100%;
+        margin-left: 16px;
+        margin-right: 16px;
+        box-sizing: border-box;
+    }
+
+    /* =========================
+       INPUT / SELECT / BUTTON
+    ========================= */
+
+    input,
+    select,
+    button,
+    textarea {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    /* =========================
+       PRICE FILTER
+    ========================= */
+
+    .price-filter {
+        width: calc(100% - 32px);
+        max-width: 100%;
+        margin-left: 16px;
+        margin-right: 16px;
+        box-sizing: border-box;
+    }
+
+    /* =========================
+       FILTER BUTTONS
+    ========================= */
+
+    .filter-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 0 16px;
+        box-sizing: border-box;
+    }
+
+    .filter-actions button {
+        flex: 1 1 140px;
+        max-width: 100%;
+    }
+
+    /* =========================
+       TEXT
+    ========================= */
+
+    h1 {
+        font-size: 28px;
+        line-height: 1.2;
+    }
+
+    h2 {
+        font-size: 24px;
+        line-height: 1.2;
+    }
+
+    h3 {
+        font-size: 20px;
+        line-height: 1.3;
+    }
+
+    p {
+        line-height: 1.5;
+        overflow-wrap: break-word;
+    }
+
+    /* =========================
+       CONTAINERS
+    ========================= */
+
+    .container,
+    .section,
+    .content {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* =========================
+       HEADER
+    ========================= */
+
+    header,
+    nav {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* =========================
+       NO HORIZONTAL SCROLL
+    ========================= */
+
+    *,
+    *::before,
+    *::after {
+        max-width: 100%;
+    }
+}
+
+/* =========================
+   VERY SMALL PHONES
+========================= */
+
+@media (max-width: 380px) {
+
+    .products-grid,
+    .product-grid {
+        padding: 0 10px;
+        gap: 12px;
+    }
+
+    .product-card img {
+        height: 150px;
+    }
+
+    .product-card .product-info {
+        padding: 10px;
+    }
+
+    .search-container,
+    .search-box,
+    .price-filter {
+        width: calc(100% - 20px);
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+
+    .filter-actions {
+        padding: 0 10px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 21px;
+    }
+}
