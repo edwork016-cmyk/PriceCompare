@@ -2144,4 +2144,18 @@ img {
     .product-actions {
         grid-template-columns: 1fr !important;
     }
+}/* =========================================================
+   MOBILE — 4 TA STATISTIKA BLOKINI OLIB TASHLASH
+   Desktopda ular qoladi
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .stats,
+    .stats-grid,
+    .stat-card,
+    .statistics {
+        display: none !important;
+    }
+
 }
