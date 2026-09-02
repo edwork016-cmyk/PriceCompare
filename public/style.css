@@ -1585,3 +1585,102 @@ img {
         font-size: 21px;
     }
 }
+/* =========================
+   MOBILE FIX
+   ========================= */
+@media (max-width: 600px) {
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .container,
+  main,
+  .main-content {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
+  }
+
+  /* Filter / price section */
+  .price-filter,
+  .filter-section {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Clear button */
+  .clear-btn,
+  .clear-filter {
+    margin: 12px auto 24px;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* PRODUCTS GRID */
+  .products-grid,
+  .product-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100%;
+  }
+
+  /* PRODUCT CARD */
+  .product-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 280px !important;
+    height: auto !important;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .product-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: contain;
+  }
+
+  .product-card-content {
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .product-card h3,
+  .product-card .product-title {
+    font-size: 14px;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  .product-card .price {
+    font-size: 16px;
+  }
+
+  /* Buttons inside cards */
+  .product-card button {
+    max-width: 100%;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+
+  .products-grid,
+  .product-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .product-card {
+    min-height: 0 !important;
+  }
+
+  .product-card img {
+    height: 180px;
+  }
+}
